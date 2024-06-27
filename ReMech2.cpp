@@ -195,7 +195,7 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
         FreeLibrary(netmechDll);
       }
       netmechDll = NULL;
-      HWND gameWindow = CreateGameWindow(hInstance, 800, 600);
+      HWND gameWindow = CreateGameWindow(hInstance, 640, 480);
       retVal = StartShell(gameWindow, "intro", 1);
       do {
         if (retVal == -1) {
