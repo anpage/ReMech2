@@ -27,7 +27,7 @@
     <ClInclude Include="ReMech2.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="AIL.h">
+    <ClInclude Include="PatchedAil.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Shell.h">
@@ -38,7 +38,7 @@
     <ClCompile Include="ReMech2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="AIL.cpp">
+    <ClCompile Include="PatchedAil.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Shell.cpp">

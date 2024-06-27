@@ -1,18 +1,97 @@
 #include "Shell.h"
+#include "Remech2.h"
 
-// Original function locations
-void(__cdecl *TrueLoadMechVariantList)(char *mechType) = (void(__cdecl *)(char *))0x1000c8b8;
-int(__stdcall *TrueCallsBitBlit)(void) = (int(__stdcall *)(void))(0x10030ef9);
+void(__cdecl *PatchedShell::OriginalLoadMechVariantList)(char *mechType);
+int(__stdcall *PatchedShell::OriginalCallsBitBlit)(void);
+void(__cdecl *PatchedShell::OriginalShellDebugLog)(const char *format, ...);
 
-volatile char *MechVariantFilename = (char *)0x1007a800;
-volatile char (*pMechVariantFilenames)[200][13] = (char (*)[200][13])0x10079d80;
+// Globals
+volatile char *PatchedShell::MechVariantFilename;
+volatile char (*PatchedShell::pMechVariantFilenames)[200][13];
+void *PatchedShell::PrjObject;
+volatile BOOL *PatchedShell::pBitBltResult;
+volatile HDC *PatchedShell::pHdc;
+volatile unsigned int *PatchedShell::pBitBlitWidth;
+volatile unsigned int *PatchedShell::pBitBltHeight;
+volatile HDC *PatchedShell::pHdcSrc;
 
-void *PrjObject = (void *)0x10071230;
-int(__thiscall *LoadFileFromPrj)(void *_this, char *fileName,
-                                 int something) = (int(__thiscall *)(void *, char *, int))0x1002e346;
+// Required functions
+int(__thiscall *PatchedShell::LoadFileFromPrj)(void *_this, char *fileName, int something);
+
+PatchedShell::PatchedShell() {
+  if (Module != NULL) {
+    DebugLog("ERROR: Multiple PatchedShell objects created?");
+    exit(1);
+  }
+
+  Module = LoadLibraryA("MW2SHELL.DLL");
+  if (Module == NULL) {
+    exit(1);
+  }
+
+  MainProc = (ShellMainProc)GetProcAddress(Module, "ShellMain");
+  if (MainProc == NULL) {
+    exit(1);
+  }
+
+  ShellWindowProc = (WNDPROC)GetProcAddress(Module, "ShellWindowProc");
+  if (ShellWindowProc == NULL) {
+    exit(1);
+  }
+
+  size_t baseAddress = (size_t)Module;
+
+  OriginalLoadMechVariantList = (void(__cdecl *)(char *))(baseAddress + 0x0000c8b8);
+  OriginalCallsBitBlit = (int(__stdcall *)(void))(baseAddress + 0x00030ef9);
+  OriginalShellDebugLog = (void(__cdecl *)(const char *format, ...))(0x00017982 + baseAddress);
+
+  MechVariantFilename = (char *)(baseAddress + 0x0007a800);
+  pMechVariantFilenames = (char(*)[200][13])(baseAddress + 0x00079d80);
+  PrjObject = (void *)(baseAddress + 0x00071230);
+
+  LoadFileFromPrj = (int(__thiscall *)(void *, char *, int))(baseAddress + 0x0002e346);
+
+  pBitBltResult = (BOOL *)(baseAddress + 0x000965f4);
+  pHdc = (HDC *)(baseAddress + 0x00066df8);
+  pBitBlitWidth = (unsigned int *)(baseAddress + 0x00096e8cl);
+  pBitBltHeight = (unsigned int *)(baseAddress + 0x00096e90);
+  pHdcSrc = (HDC *)(baseAddress + 0x00067204);
+
+  DetourTransactionBegin();
+  DetourAttach((PVOID *)(&OriginalLoadMechVariantList), LoadMechVariantList);
+  DetourAttach((PVOID *)(&OriginalCallsBitBlit), CallsBitBlit);
+  DetourAttach((PVOID *)(&OriginalShellDebugLog), DebugLog);
+  DetourAttach((PVOID *)(&TrueHeapFree), FakeHeapFree);
+  DetourAttach((PVOID *)(&TrueRegCreateKeyExA), FakeRegCreateKeyExA);
+  DetourAttach((PVOID *)(&TrueRegOpenKeyExA), FakeRegOpenKeyExA);
+  DetourTransactionCommit();
+
+  Ail = new PatchedAil();
+}
+
+PatchedShell::~PatchedShell() {
+  DetourTransactionBegin();
+  DetourDetach((PVOID *)(&OriginalLoadMechVariantList), LoadMechVariantList);
+  DetourDetach((PVOID *)(&OriginalCallsBitBlit), CallsBitBlit);
+  DetourDetach((PVOID *)(&OriginalShellDebugLog), DebugLog);
+  DetourDetach((PVOID *)(&TrueHeapFree), FakeHeapFree);
+  DetourDetach((PVOID *)(&TrueRegCreateKeyExA), FakeRegCreateKeyExA);
+  DetourDetach((PVOID *)(&TrueRegOpenKeyExA), FakeRegOpenKeyExA);
+  DetourTransactionCommit();
+  FreeLibrary(Module);
+  Module = NULL;
+  delete Ail;
+}
+
+int PatchedShell::ShellMain(const char *introOrSim, HWND window) {
+  DebugLog("Entering_Shell...\n");
+  int result = MainProc(Module, 0, introOrSim, 1, window);
+  DebugLog("Returned from Shell, retval=%d.\n", result);
+  return result;
+}
 
 // Replacement function that uses cFilename instead of cAlternateFileName
-void __cdecl FakeLoadMechVariantList(char *mechType) {
+void __cdecl PatchedShell::LoadMechVariantList(char *mechType) {
   // Clear the list
   memset((void *)*pMechVariantFilenames, 0, sizeof(*pMechVariantFilenames));
 
@@ -46,14 +125,8 @@ void __cdecl FakeLoadMechVariantList(char *mechType) {
   }
 }
 
-volatile BOOL *pBitBltResult = (BOOL *)0x100965f4;
-volatile HDC *pHdc = (HDC *)0x10066df8;
-volatile unsigned int *pBitBlitWidth = (unsigned int *)0x10096e8cl;
-volatile unsigned int *pBitBltHeight = (unsigned int *)0x10096e90;
-volatile HDC *pHdcSrc = (HDC *)0x10067204;
-
 // Replacement function that doesn't assume BitBlt will assume the number of lines blitted
-int __stdcall FakeCallsBitBlit() {
+int __stdcall PatchedShell::CallsBitBlit() {
   *pBitBltResult = BitBlt(*pHdc, 0, 0, *pBitBlitWidth, *pBitBltHeight, *pHdcSrc, 0, 0, SRCCOPY);
 
   if (*pBitBltResult == FALSE) {

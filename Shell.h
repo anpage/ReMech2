@@ -3,24 +3,40 @@
 #pragma once
 
 #include "framework.h"
+#include "PatchedAil.h"
 
-// Globals
-extern void* PrjObject;
-extern int(__thiscall* LoadFileFromPrj)(void* _this, char* fileName, int something);
+typedef int(__stdcall *ShellMainProc)(HMODULE module, int, const char *, int, HWND);
 
-extern volatile BOOL* pBitBltResult;
-extern volatile HDC* pHdc;
-extern volatile unsigned int* pBitBlitWidth;
-extern volatile unsigned int* pBitBltHeight;
-extern volatile HDC* pHdcSrc;
+class PatchedShell {
+public:
+  PatchedShell();
+  ~PatchedShell();
+  int ShellMain(const char *introOrSim, HWND window);
 
-extern volatile char* MechVariantFilename;
-extern volatile char(*pMechVariantFilenames)[200][13];
+private:
+  HMODULE Module;
+  ShellMainProc MainProc;
+  PatchedAil *Ail;
 
-// Original Functions
-extern void(__cdecl* TrueLoadMechVariantList)(char* mechType);
-extern int(__stdcall* TrueCallsBitBlit)(void);
+  // Original functions to replace
+  static void(__cdecl *OriginalLoadMechVariantList)(char *mechType);
+  static int(__stdcall *OriginalCallsBitBlit)(void);
+  static void(__cdecl *OriginalShellDebugLog)(const char *format, ...);
 
-// Replacement functions
-void __cdecl FakeLoadMechVariantList(char* mechType);
-int __stdcall FakeCallsBitBlit();
+  // Globals
+  static volatile char *MechVariantFilename;
+  static volatile char (*pMechVariantFilenames)[200][13];
+  static void *PrjObject;
+  static volatile BOOL *pBitBltResult;
+  static volatile HDC *pHdc;
+  static volatile unsigned int *pBitBlitWidth;
+  static volatile unsigned int *pBitBltHeight;
+  static volatile HDC *pHdcSrc;
+
+  // Required functions
+  static int(__thiscall *LoadFileFromPrj)(void *_this, char *fileName, int something);
+
+  // Replacement functions
+  static void __cdecl LoadMechVariantList(char *mechType);
+  static int __stdcall CallsBitBlit();
+};

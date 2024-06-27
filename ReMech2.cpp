@@ -1,7 +1,46 @@
 #include "ReMech2.h"
-#include "AIL.h"
 #include "Shell.h"
-#include "framework.h"
+#include <memory>
+
+BOOL(WINAPI *TrueHeapFree)(HANDLE, DWORD, _Frees_ptr_opt_ LPVOID) = HeapFree;
+BOOL WINAPI FakeHeapFree(HANDLE hHeap, DWORD dwFlags, _Frees_ptr_opt_ LPVOID lpMem) { return TRUE; }
+
+LSTATUS(WINAPI *TrueRegCreateKeyExA)
+(HKEY, LPCSTR, DWORD, LPSTR, DWORD, REGSAM, const LPSECURITY_ATTRIBUTES, PHKEY, LPDWORD) = RegCreateKeyExA;
+LSTATUS WINAPI FakeRegCreateKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD Reserved, LPSTR lpClass, DWORD dwOptions,
+                                   REGSAM samDesired, const LPSECURITY_ATTRIBUTES lpSecurityAttributes, PHKEY phkResult,
+                                   LPDWORD lpdwDisposition) {
+  if (hKey == HKEY_LOCAL_MACHINE) {
+    hKey = HKEY_CURRENT_USER;
+  }
+  LSTATUS retVal = TrueRegCreateKeyExA(hKey, lpSubKey, Reserved, lpClass, dwOptions, samDesired, lpSecurityAttributes,
+                                       phkResult, lpdwDisposition);
+  return retVal;
+}
+
+LSTATUS(WINAPI *TrueRegOpenKeyExA)(HKEY, LPCSTR, DWORD, REGSAM, PHKEY) = RegOpenKeyExA;
+LSTATUS WINAPI FakeRegOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult) {
+  if (hKey == HKEY_LOCAL_MACHINE) {
+    hKey = HKEY_CURRENT_USER;
+  }
+  LSTATUS retVal = TrueRegOpenKeyExA(hKey, lpSubKey, ulOptions, samDesired, phkResult);
+  return retVal;
+}
+
+void DebugLog(const char *format, ...) {
+  char msgBuf[256];
+  va_list args;
+  va_start(args, format);
+  vsnprintf(msgBuf, 256, format, args);
+  va_end(args);
+  OutputDebugStringA(msgBuf);
+}
+
+DWORD GetLastErrorAsString(LPSTR buffer, DWORD size) {
+  DWORD errorMessageID = GetLastError();
+  return FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, errorMessageID,
+                        MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), buffer, size, NULL);
+}
 
 WNDPROC SimWindowProc = NULL;
 WNDPROC ShellWindowProc = NULL;
@@ -82,75 +121,11 @@ static HWND CreateGameWindow(HINSTANCE hInstance, int width, int height) {
   return window;
 }
 
-BOOL(WINAPI *TrueHeapFree)
-(HANDLE hHeap, DWORD dwFlags, _Frees_ptr_opt_ LPVOID lpMem) = HeapFree;
-
-static BOOL WINAPI FakeHeapFree(HANDLE hHeap, DWORD dwFlags, _Frees_ptr_opt_ LPVOID lpMem) { return TRUE; }
-
-typedef int(__stdcall *ShellMainProc)(HMODULE module, int always_0, const char *intro_or_sim, int always_1,
-                                      HWND window);
-
-LSTATUS(WINAPI *TrueRegCreateKeyExA)
-(HKEY hKey, LPCSTR lpSubKey, DWORD Reserved, LPSTR lpClass, DWORD dwOptions, REGSAM samDesired,
- const LPSECURITY_ATTRIBUTES lpSecurityAttributes, PHKEY phkResult, LPDWORD lpdwDisposition) = RegCreateKeyExA;
-
-LSTATUS WINAPI FakeRegCreateKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD Reserved, LPSTR lpClass, DWORD dwOptions,
-                                   REGSAM samDesired, const LPSECURITY_ATTRIBUTES lpSecurityAttributes, PHKEY phkResult,
-                                   LPDWORD lpdwDisposition) {
-  if (hKey == HKEY_LOCAL_MACHINE) {
-    hKey = HKEY_CURRENT_USER;
-  }
-  LSTATUS retVal = TrueRegCreateKeyExA(hKey, lpSubKey, Reserved, lpClass, dwOptions, samDesired, lpSecurityAttributes,
-                                       phkResult, lpdwDisposition);
-  return retVal;
+static int StartShell(HWND window, const char *introOrSim) {
+  std::unique_ptr<PatchedShell> shell = std::unique_ptr<PatchedShell>(new PatchedShell());
+  return shell->ShellMain(introOrSim, window);
 }
 
-LSTATUS(WINAPI *TrueRegOpenKeyExA)
-(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult) = RegOpenKeyExA;
-
-LSTATUS WINAPI FakeRegOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult) {
-  if (hKey == HKEY_LOCAL_MACHINE) {
-    hKey = HKEY_CURRENT_USER;
-  }
-  LSTATUS retVal = TrueRegOpenKeyExA(hKey, lpSubKey, ulOptions, samDesired, phkResult);
-  return retVal;
-}
-
-static int StartShell(HWND window, const char *intro_or_sim, int always_1) {
-  HMODULE shellDll = LoadLibraryA("MW2SHELL.DLL");
-
-  if (shellDll == NULL) {
-    return 1;
-  }
-
-  ShellMainProc ShellMain = (ShellMainProc)GetProcAddress(shellDll, "ShellMain");
-  if (ShellMain == NULL) {
-    return 1;
-  }
-
-  ShellWindowProc = (WNDPROC)GetProcAddress(shellDll, "ShellWindowProc");
-  if (ShellWindowProc == NULL) {
-    return 1;
-  }
-
-  DetourTransactionBegin();
-  DetourAttach((PVOID *)(&TrueLoadMechVariantList), FakeLoadMechVariantList);
-  DetourAttach((PVOID *)(&TrueCallsBitBlit), FakeCallsBitBlit);
-  DetourAttach((PVOID *)(&TrueWaveOutProc), FakeWaveOutProc);
-  DetourAttach((PVOID *)(&TrueAilFileRead), FakeAilFileRead);
-  DetourAttach((PVOID *)(&TrueAilMemFreeLock), FakeAilMemFreeLock);
-  DetourAttach((PVOID *)(&TrueHeapFree), FakeHeapFree);
-  DetourAttach((PVOID *)(&TrueRegCreateKeyExA), FakeRegCreateKeyExA);
-  DetourAttach((PVOID *)(&TrueRegOpenKeyExA), FakeRegOpenKeyExA);
-  DetourTransactionCommit();
-
-  printf("Entering_Shell...");
-  int result = ShellMain(shellDll, 0, intro_or_sim, always_1, window);
-  printf("Returned from Shell, retval=%d.\n", result);
-  FreeLibrary(shellDll);
-
-  return result;
-}
 
 typedef int(__cdecl *SimMainProc)(HMODULE module, unsigned int always_0, LPSTR cmdline, void **param_4, int param_5,
                                   HWND param_6);
@@ -171,9 +146,9 @@ static int StartSim(HWND window, char *cmdline, void **param_3, int isNetGame) {
     return 1;
   }
 
-  printf("Entering sim...");
+  DebugLog("Entering sim...\n");
   int result = (*SimMain)(simDll, 0, cmdline, param_3, isNetGame, window);
-  printf("Returned from Sim, retval=%d.\n", result);
+  DebugLog("Returned from Sim, retval=%d.\n", result);
   FreeLibrary(simDll);
 
   return result;
@@ -200,9 +175,9 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
         char someNetmechStruct[28]; // TODO: Init the struct on the stack
         // skipped some struct stuff here
         while (true) {
-          printf("Entering net DLL...\n");
+          DebugLog("Entering net DLL...\n");
           int netmechLauncherResult = NetmechLauncher((void **)(&someNetmechStruct));
-          printf("Returned from net DLL.\n");
+          DebugLog("Returned from net DLL.\n");
           if (netmechLauncherResult == 0)
             break;
           HWND gameWindow = CreateGameWindow(hInstance, 640, 480);
@@ -211,7 +186,7 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
           gameWindow = NULL;
           // skip
         }
-        printf("Returned from net DLL.  Exiting...\n");
+        DebugLog("Returned from net DLL.  Exiting...\n");
         FreeLibrary(netmechDll);
       }
     }
@@ -224,7 +199,7 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
       }
       netmechDll = NULL;
       HWND gameWindow = CreateGameWindow(hInstance, 640, 480);
-      retVal = StartShell(gameWindow, "intro", 1);
+      retVal = StartShell(gameWindow, "intro");
       do {
         if (retVal == -1) {
           MessageBoxA(NULL, "REMECH 2 is unable to locate necessary program components.", "REMECH 2", 0x10);
@@ -255,7 +230,7 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
             return startSimResult;
           }
         }
-        retVal = StartShell(gameWindow, "sim", 1);
+        retVal = StartShell(gameWindow, "sim");
       } while (true);
     }
   }

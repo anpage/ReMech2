@@ -103,7 +103,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="AIL.h" />
+    <ClInclude Include="PatchedAil.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="ReMech2.h" />
     <ClInclude Include="Resource.h" />
@@ -111,7 +111,7 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="AIL.cpp" />
+    <ClCompile Include="PatchedAil.cpp" />
     <ClCompile Include="ReMech2.cpp" />
     <ClCompile Include="Shell.cpp" />
   </ItemGroup>
