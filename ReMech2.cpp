@@ -90,6 +90,32 @@ static BOOL WINAPI FakeHeapFree(HANDLE hHeap, DWORD dwFlags, _Frees_ptr_opt_ LPV
 typedef int(__stdcall *ShellMainProc)(HMODULE module, int always_0, const char *intro_or_sim, int always_1,
                                       HWND window);
 
+LSTATUS(WINAPI *TrueRegCreateKeyExA)
+(HKEY hKey, LPCSTR lpSubKey, DWORD Reserved, LPSTR lpClass, DWORD dwOptions, REGSAM samDesired,
+ const LPSECURITY_ATTRIBUTES lpSecurityAttributes, PHKEY phkResult, LPDWORD lpdwDisposition) = RegCreateKeyExA;
+
+LSTATUS WINAPI FakeRegCreateKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD Reserved, LPSTR lpClass, DWORD dwOptions,
+                                   REGSAM samDesired, const LPSECURITY_ATTRIBUTES lpSecurityAttributes, PHKEY phkResult,
+                                   LPDWORD lpdwDisposition) {
+  if (hKey == HKEY_LOCAL_MACHINE) {
+    hKey = HKEY_CURRENT_USER;
+  }
+  LSTATUS retVal = TrueRegCreateKeyExA(hKey, lpSubKey, Reserved, lpClass, dwOptions, samDesired, lpSecurityAttributes,
+                                       phkResult, lpdwDisposition);
+  return retVal;
+}
+
+LSTATUS(WINAPI *TrueRegOpenKeyExA)
+(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult) = RegOpenKeyExA;
+
+LSTATUS WINAPI FakeRegOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired, PHKEY phkResult) {
+  if (hKey == HKEY_LOCAL_MACHINE) {
+    hKey = HKEY_CURRENT_USER;
+  }
+  LSTATUS retVal = TrueRegOpenKeyExA(hKey, lpSubKey, ulOptions, samDesired, phkResult);
+  return retVal;
+}
+
 static int StartShell(HWND window, const char *intro_or_sim, int always_1) {
   HMODULE shellDll = LoadLibraryA("MW2SHELL.DLL");
 
@@ -108,12 +134,14 @@ static int StartShell(HWND window, const char *intro_or_sim, int always_1) {
   }
 
   DetourTransactionBegin();
-  DetourAttach((PVOID *)(&TrueLoadMechVariantList), (PVOID)FakeLoadMechVariantList);
-  DetourAttach((PVOID *)(&TrueCallsBitBlit), (PVOID)FakeCallsBitBlit);
+  DetourAttach((PVOID *)(&TrueLoadMechVariantList), FakeLoadMechVariantList);
+  DetourAttach((PVOID *)(&TrueCallsBitBlit), FakeCallsBitBlit);
   DetourAttach((PVOID *)(&TrueWaveOutProc), FakeWaveOutProc);
   DetourAttach((PVOID *)(&TrueAilFileRead), FakeAilFileRead);
   DetourAttach((PVOID *)(&TrueAilMemFreeLock), FakeAilMemFreeLock);
   DetourAttach((PVOID *)(&TrueHeapFree), FakeHeapFree);
+  DetourAttach((PVOID *)(&TrueRegCreateKeyExA), FakeRegCreateKeyExA);
+  DetourAttach((PVOID *)(&TrueRegOpenKeyExA), FakeRegOpenKeyExA);
   DetourTransactionCommit();
 
   printf("Entering_Shell...");
