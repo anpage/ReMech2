@@ -190,7 +190,7 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
   } else {
     int cmdLineIsEmpty = _strcmpi(lpCmdLine, "");
     if (cmdLineIsEmpty == 0) {
-      HMODULE netmechDll = GetModuleHandleA("NETMECHw.DLL");
+      HMODULE netmechDll = GetModuleHandleA("NETMECHW.DLL");
       if (netmechDll != NULL) {
         FreeLibrary(netmechDll);
       }
