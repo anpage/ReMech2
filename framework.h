@@ -10,6 +10,7 @@
 #include <windows.h>
 #include <mmeapi.h>
 #include <Mmsystem.h>
+#include <ddraw.h>
 // C RunTime Header Files
 #include <malloc.h>
 #include <memory.h>
@@ -19,5 +20,3 @@
 #include <stdint.h>
 // Dependencies
 #include <detours/detours.h>
-
-#include <ddraw.h>
