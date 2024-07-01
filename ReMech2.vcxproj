@@ -103,6 +103,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="PatchedSim.h" />
     <ClInclude Include="PatchedAil.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="ReMech2.h" />
@@ -112,6 +113,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PatchedAil.cpp" />
+    <ClCompile Include="PatchedSim.cpp" />
     <ClCompile Include="ReMech2.cpp" />
     <ClCompile Include="PatchedShell.cpp" />
   </ItemGroup>

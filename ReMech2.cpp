@@ -1,7 +1,9 @@
 #include "ReMech2.h"
 #include "PatchedShell.h"
+#include "PatchedSim.h"
 #include <memory>
 
+// Win32 shims
 BOOL(WINAPI *TrueHeapFree)(HANDLE, DWORD, _Frees_ptr_opt_ LPVOID) = HeapFree;
 BOOL WINAPI FakeHeapFree(HANDLE hHeap, DWORD dwFlags, _Frees_ptr_opt_ LPVOID lpMem) { return TRUE; }
 
@@ -126,32 +128,21 @@ static int StartShell(HWND window, const char *introOrSim) {
   return shell->ShellMain(introOrSim, window);
 }
 
+static int StartSim(HWND window, char *cmdLine, void **unknown, int isNetGame) {
+  std::unique_ptr<PatchedSim> shell = std::unique_ptr<PatchedSim>(new PatchedSim());
+  return shell->SimMain(cmdLine, unknown, isNetGame, window);
+}
 
-typedef int(__cdecl *SimMainProc)(HMODULE module, unsigned int always_0, LPSTR cmdline, void **param_4, int param_5,
-                                  HWND param_6);
+void CALLBACK TimeCallback(UINT uTimerID, UINT uMsg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2) {
+  DebugLog("Time callback!");
+  return;
+}
 
-static int StartSim(HWND window, char *cmdline, void **param_3, int isNetGame) {
-  HMODULE simDll = LoadLibraryA("MW2.DLL");
-  if (simDll == (HMODULE)0x0) {
-    return 1;
-  }
+MMRESULT(__stdcall *TrueTimeSetEvent)(UINT, UINT, LPTIMECALLBACK, DWORD_PTR, UINT) = timeSetEvent;
 
-  SimMainProc SimMain = (SimMainProc)GetProcAddress(simDll, "SimMain");
-  if (SimMain == NULL) {
-    return 1;
-  }
-
-  SimWindowProc = (WNDPROC)GetProcAddress(simDll, "SimWindowProc");
-  if (SimWindowProc == NULL) {
-    return 1;
-  }
-
-  DebugLog("Entering sim...\n");
-  int result = (*SimMain)(simDll, 0, cmdline, param_3, isNetGame, window);
-  DebugLog("Returned from Sim, retval=%d.\n", result);
-  FreeLibrary(simDll);
-
-  return result;
+MMRESULT __stdcall FakeTimeSetEvent(UINT uDelay, UINT uResolution, LPTIMECALLBACK lpTimeProc, DWORD_PTR dwUser,
+                                    UINT fuEvent) {
+  return TrueTimeSetEvent(uDelay, uResolution, lpTimeProc, dwUser, fuEvent);
 }
 
 typedef int (*NetMechLauncherProc)(void **param_1);

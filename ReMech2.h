@@ -19,3 +19,8 @@ extern LSTATUS WINAPI FakeRegCreateKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD Rese
                                           PHKEY phkResult, LPDWORD lpdwDisposition);
 extern LSTATUS WINAPI FakeRegOpenKeyExA(HKEY hKey, LPCSTR lpSubKey, DWORD ulOptions, REGSAM samDesired,
                                         PHKEY phkResult);
+
+extern MMRESULT(__stdcall *TrueTimeSetEvent)(UINT, UINT, LPTIMECALLBACK, DWORD_PTR, UINT);
+
+extern MMRESULT __stdcall FakeTimeSetEvent(UINT uDelay, UINT uResolution, LPTIMECALLBACK lpTimeProc, DWORD_PTR dwUser,
+                                           UINT fuEvent);
