@@ -147,6 +147,38 @@ MMRESULT __stdcall FakeTimeSetEvent(UINT uDelay, UINT uResolution, LPTIMECALLBAC
 
 typedef int (*NetMechLauncherProc)(void **param_1);
 
+static char CdDriveLetter = '\0';
+
+static char CdCheck() {
+  if (CdDriveLetter == '\0') {
+    LPSTR driveStrings = (LPSTR)malloc(sizeof(TCHAR) * 105);
+    GetLogicalDriveStringsA(104, driveStrings);
+
+    char filenameBuf[20];
+    strcpy(filenameBuf, " :\\OLD_HERC.DRV");
+
+    // Find a CD with the file "OLD_HERC.DRV"
+    LPCSTR driveName;
+    for (driveName = driveStrings; *driveName != '\0'; driveName = driveName + 4) {
+      UINT driveType = GetDriveTypeA(driveName);
+      if (driveType == DRIVE_CDROM) {
+        filenameBuf[0] = driveName[0];
+        WIN32_FIND_DATAA findData;
+        HANDLE fileHandle = FindFirstFileA(filenameBuf, &findData);
+        if (fileHandle != (HANDLE)-1) {
+          FindClose(fileHandle);
+          break;
+        }
+      }
+    }
+    if (*driveName != '\0') {
+      CdDriveLetter = *driveName;
+    }
+    free(driveStrings);
+  }
+  return CdDriveLetter;
+}
+
 int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPSTR lpCmdLine,
                      _In_ int nCmdShow) {
   int retVal = 0;
@@ -184,6 +216,11 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
   } else {
     int cmdLineIsEmpty = _strcmpi(lpCmdLine, "");
     if (cmdLineIsEmpty == 0) {
+      char cdDriveLetter = CdCheck();
+      if (cdDriveLetter == '\0') {
+        MessageBoxA((HWND)0x0, "You must insert the game's CD into your CD-ROM drive.", "REMECH 2", MB_ICONERROR);
+        exit(1);
+      }
       HMODULE netmechDll = GetModuleHandleA("NETMECHW.DLL");
       if (netmechDll != NULL) {
         FreeLibrary(netmechDll);
@@ -193,7 +230,7 @@ int APIENTRY WinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance,
       retVal = StartShell(gameWindow, "intro");
       do {
         if (retVal == -1) {
-          MessageBoxA(NULL, "REMECH 2 is unable to locate necessary program components.", "REMECH 2", 0x10);
+          MessageBoxA(NULL, "REMECH 2 is unable to locate necessary program components.", "REMECH 2", MB_ICONERROR);
           exit(1);
         } else if ((char)retVal == -1) {
           return retVal;
