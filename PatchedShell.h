@@ -7,6 +7,11 @@
 
 typedef int(__stdcall *ShellMainProc)(HMODULE module, int, const char *, int, HWND);
 
+typedef void(__cdecl LoadMechVariantListFunc)(char *mechType);
+typedef int(__stdcall CallsBitBlitFunc)(void);
+typedef void(__cdecl ShellDebugLogFunc)(const char *format, ...);
+typedef int(__fastcall LoadFileFromPrjFunc)(void *_this, void *_unused_thiscall, char *filename, int);
+
 class PatchedShell {
 public:
   PatchedShell();
@@ -19,9 +24,9 @@ private:
   PatchedAil *Ail;
 
   // Original functions to replace
-  static void(__cdecl *OriginalLoadMechVariantList)(char *mechType);
-  static int(__stdcall *OriginalCallsBitBlit)(void);
-  static void(__cdecl *OriginalShellDebugLog)(const char *format, ...);
+  static LoadMechVariantListFunc *OriginalLoadMechVariantList;
+  static CallsBitBlitFunc *OriginalCallsBitBlit;
+  static ShellDebugLogFunc *OriginalShellDebugLog;
 
   // Globals
   static volatile char *MechVariantFilename;
@@ -34,7 +39,7 @@ private:
   static volatile HDC *pHdcSrc;
 
   // Required functions
-  static int(__thiscall *LoadFileFromPrj)(void *_this, char *fileName, int something);
+  static LoadFileFromPrjFunc *LoadFileFromPrj;
 
   // Replacement functions
   static void __cdecl LoadMechVariantList(char *mechType);

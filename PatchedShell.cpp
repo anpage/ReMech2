@@ -1,9 +1,9 @@
 #include "PatchedShell.h"
 #include "Remech2.h"
 
-void(__cdecl *PatchedShell::OriginalLoadMechVariantList)(char *mechType);
-int(__stdcall *PatchedShell::OriginalCallsBitBlit)(void);
-void(__cdecl *PatchedShell::OriginalShellDebugLog)(const char *format, ...);
+LoadMechVariantListFunc *PatchedShell::OriginalLoadMechVariantList;
+CallsBitBlitFunc *PatchedShell::OriginalCallsBitBlit;
+ShellDebugLogFunc *PatchedShell::OriginalShellDebugLog;
 
 // Globals
 volatile char *PatchedShell::MechVariantFilename;
@@ -16,7 +16,7 @@ volatile unsigned int *PatchedShell::pBitBltHeight;
 volatile HDC *PatchedShell::pHdcSrc;
 
 // Required functions
-int(__thiscall *PatchedShell::LoadFileFromPrj)(void *_this, char *fileName, int something);
+LoadFileFromPrjFunc *PatchedShell::LoadFileFromPrj;
 
 PatchedShell::PatchedShell() {
   if (Module != NULL) {
@@ -41,15 +41,15 @@ PatchedShell::PatchedShell() {
 
   size_t baseAddress = (size_t)Module;
 
-  OriginalLoadMechVariantList = (void(__cdecl *)(char *))(baseAddress + 0x0000c8b8);
-  OriginalCallsBitBlit = (int(__stdcall *)(void))(baseAddress + 0x00030ef9);
-  OriginalShellDebugLog = (void(__cdecl *)(const char *format, ...))(0x00017982 + baseAddress);
+  OriginalLoadMechVariantList = (LoadMechVariantListFunc *)(baseAddress + 0x0000c8b8);
+  OriginalCallsBitBlit = (CallsBitBlitFunc *)(baseAddress + 0x00030ef9);
+  OriginalShellDebugLog = (ShellDebugLogFunc *)(0x00017982 + baseAddress);
 
   MechVariantFilename = (char *)(baseAddress + 0x0007a800);
   pMechVariantFilenames = (char(*)[200][13])(baseAddress + 0x00079d80);
   PrjObject = (void *)(baseAddress + 0x00071230);
 
-  LoadFileFromPrj = (int(__thiscall *)(void *, char *, int))(baseAddress + 0x0002e346);
+  LoadFileFromPrj = (LoadFileFromPrjFunc *)(baseAddress + 0x0002e346);
 
   pBitBltResult = (BOOL *)(baseAddress + 0x000965f4);
   pHdc = (HDC *)(baseAddress + 0x00066df8);
@@ -102,7 +102,7 @@ void __cdecl PatchedShell::LoadMechVariantList(char *mechType) {
   // Load the built-in mech variants from the MW2.PRJ file into the first 100 indices
   for (int i = 1; i <= 99; i++) {
     sprintf((char *)MechVariantFilename, "%s%02dstd", mechType, i);
-    int result = LoadFileFromPrj(PrjObject, (char *)MechVariantFilename, 6);
+    int result = LoadFileFromPrj(PrjObject, nullptr, (char *)MechVariantFilename, 6);
 
     if (result > -1) {
       strcpy((char *)(*pMechVariantFilenames)[i], (const char *)MechVariantFilename);
