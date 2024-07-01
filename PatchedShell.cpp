@@ -1,4 +1,4 @@
-#include "Shell.h"
+#include "PatchedShell.h"
 #include "Remech2.h"
 
 void(__cdecl *PatchedShell::OriginalLoadMechVariantList)(char *mechType);
@@ -131,7 +131,7 @@ int __stdcall PatchedShell::CallsBitBlit() {
 
   if (*pBitBltResult == FALSE) {
     DWORD lastError = GetLastError();
-    // debug_print("GDI StretchBlt err: %d\n", lastError);
+    DebugLog("GDI StretchBlt err: %d\n", lastError);
     return -1;
   }
 

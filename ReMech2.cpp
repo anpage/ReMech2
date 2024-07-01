@@ -1,5 +1,5 @@
 #include "ReMech2.h"
-#include "Shell.h"
+#include "PatchedShell.h"
 #include <memory>
 
 BOOL(WINAPI *TrueHeapFree)(HANDLE, DWORD, _Frees_ptr_opt_ LPVOID) = HeapFree;

@@ -107,13 +107,13 @@
     <ClInclude Include="framework.h" />
     <ClInclude Include="ReMech2.h" />
     <ClInclude Include="Resource.h" />
-    <ClInclude Include="Shell.h" />
+    <ClInclude Include="PatchedShell.h" />
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="PatchedAil.cpp" />
     <ClCompile Include="ReMech2.cpp" />
-    <ClCompile Include="Shell.cpp" />
+    <ClCompile Include="PatchedShell.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ReMech2.rc" />
