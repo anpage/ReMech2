@@ -103,19 +103,19 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="PatchedSim.h" />
-    <ClInclude Include="PatchedAil.h" />
-    <ClInclude Include="framework.h" />
-    <ClInclude Include="ReMech2.h" />
-    <ClInclude Include="Resource.h" />
-    <ClInclude Include="PatchedShell.h" />
-    <ClInclude Include="targetver.h" />
+    <ClInclude Include="src\PatchedSim.h" />
+    <ClInclude Include="src\PatchedAil.h" />
+    <ClInclude Include="src\framework.h" />
+    <ClInclude Include="src\ReMech2.h" />
+    <ClInclude Include="src\Resource.h" />
+    <ClInclude Include="src\PatchedShell.h" />
+    <ClInclude Include="src\targetver.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="PatchedAil.cpp" />
-    <ClCompile Include="PatchedSim.cpp" />
-    <ClCompile Include="ReMech2.cpp" />
-    <ClCompile Include="PatchedShell.cpp" />
+    <ClCompile Include="src\PatchedAil.cpp" />
+    <ClCompile Include="src\PatchedSim.cpp" />
+    <ClCompile Include="src\ReMech2.cpp" />
+    <ClCompile Include="src\PatchedShell.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ReMech2.rc" />

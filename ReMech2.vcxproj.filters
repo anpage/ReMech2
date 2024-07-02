@@ -15,33 +15,33 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="framework.h">
+    <ClInclude Include="src\framework.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="targetver.h">
+    <ClInclude Include="src\targetver.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Resource.h">
+    <ClInclude Include="src\Resource.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ReMech2.h">
+    <ClInclude Include="src\ReMech2.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="PatchedAil.h">
+    <ClInclude Include="src\PatchedAil.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Shell.h">
+    <ClInclude Include="src\Shell.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="ReMech2.cpp">
+    <ClCompile Include="src\ReMech2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="PatchedAil.cpp">
+    <ClCompile Include="src\PatchedAil.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Shell.cpp">
+    <ClCompile Include="src\Shell.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
