@@ -18,6 +18,7 @@ GetCdAudioTracksFunc *PatchedSim::OriginalGetCdAudioTracks;
 GetCdAudioPositionFunc *PatchedSim::OriginalGetCdAudioPosition;
 SetCdAudioVolumeFunc *PatchedSim::OriginalSetCdAudioVolume;
 DeInitCdAudioFunc *PatchedSim::OriginalDeInitCdAudio;
+HandleMessagesFunc *PatchedSim::OriginalHandleMessages;
 
 volatile DWORD *PatchedSim::pTicksCheck;
 volatile DWORD *PatchedSim::pTicks1;
@@ -47,6 +48,8 @@ volatile AudioCdStatus *PatchedSim::pAudioCdStatus;
 volatile CdAudioTracks *PatchedSim::pCdAudioTrackData;
 volatile CdAudioPosition *PatchedSim::pPausedCdAudioPosition;
 volatile int32_t *PatchedSim::pCdAudioVolume;
+
+volatile BOOL *PatchedSim::pMessagesHandled;
 
 PatchedSim::PatchedSim() {
   if (Module != NULL) {
@@ -89,6 +92,7 @@ PatchedSim::PatchedSim() {
   OriginalGetCdAudioPosition = (GetCdAudioPositionFunc *)(baseAddress + 0x0005b61d);
   OriginalSetCdAudioVolume = (SetCdAudioVolumeFunc *)(baseAddress + 0x0005b734);
   OriginalDeInitCdAudio = (DeInitCdAudioFunc *)(baseAddress + 0x0005abff);
+  OriginalHandleMessages = (HandleMessagesFunc *)(baseAddress + 0x00067bbc);
 
   // Globals
   pTicksCheck = (DWORD *)(baseAddress + 0x000ad008);
@@ -114,6 +118,7 @@ PatchedSim::PatchedSim() {
   pCdAudioTrackData = (CdAudioTracks *)(baseAddress + 0x000aa280);
   pPausedCdAudioPosition = (CdAudioPosition *)(baseAddress + 0x000becb0);
   pCdAudioVolume = (int32_t *)(baseAddress + 0x000a14a4);
+  pMessagesHandled = (BOOL *)(baseAddress + 0x000acb18);
 
   DetourTransactionBegin();
   DetourAttach((PVOID *)(&OriginalGameTickTimerCallback), GameTickTimerCallback);
@@ -126,6 +131,7 @@ PatchedSim::PatchedSim() {
   DetourAttach((PVOID *)(&OriginalPlayCdAudio), PlayCdAudio);
   DetourAttach((PVOID *)(&OriginalGetCdStatus), GetCdStatus);
   DetourAttach((PVOID *)(&OriginalStartCdAudio), StartCdAudio);
+  DetourAttach((PVOID *)(&OriginalHandleMessages), HandleMessages);
   DetourAttach((PVOID *)(&TrueRegCreateKeyExA), FakeRegCreateKeyExA);
   DetourAttach((PVOID *)(&TrueRegOpenKeyExA), FakeRegOpenKeyExA);
   DetourAttach((PVOID *)(&TrueTimeSetEvent), FakeTimeSetEvent);
@@ -146,6 +152,7 @@ PatchedSim::~PatchedSim() {
   DetourDetach((PVOID *)(&OriginalPlayCdAudio), PlayCdAudio);
   DetourDetach((PVOID *)(&OriginalGetCdStatus), GetCdStatus);
   DetourDetach((PVOID *)(&OriginalStartCdAudio), StartCdAudio);
+  DetourDetach((PVOID *)(&OriginalHandleMessages), HandleMessages);
   DetourDetach((PVOID *)(&TrueRegCreateKeyExA), FakeRegCreateKeyExA);
   DetourDetach((PVOID *)(&TrueRegOpenKeyExA), FakeRegOpenKeyExA);
   DetourDetach((PVOID *)(&TrueTimeSetEvent), FakeTimeSetEvent);
@@ -330,4 +337,28 @@ AudioCdStatus __cdecl PatchedSim::GetCdStatus() {
   }
 
   return CD_ERROR;
+}
+
+// The commented-out loop was causing bad stuttering when the mouse was moved.
+// I'm keeping it around in case removing it causes other problems.
+void __stdcall PatchedSim::HandleMessages() {
+  if (*pWindowActive == 0) {
+    WaitMessage();
+  }
+
+  if (*pMessagesHandled == 0) {
+    tagMSG msg;
+    BOOL messageAvailable = PeekMessageA(&msg, (HWND)0x0, 0x0, 0x0, 1);
+    if (messageAvailable != 0) {
+      // while (MouseOutsideClientWindow == FALSE && msg.message >= WM_MOUSEFIRST && msg.message <= WM_MOUSELAST) {
+      //   PeekMessageA(&msg, (HWND)0x0, 0, 0, 1);
+      // }
+      if (msg.hwnd == (HWND)0x0 || msg.message != WM_QUIT) {
+        TranslateMessage(&msg);
+        DispatchMessageA(&msg);
+      } else {
+        *pMessagesHandled = 1;
+      }
+    }
+  }
 }

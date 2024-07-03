@@ -85,6 +85,7 @@ typedef int32_t(__cdecl GetCdAudioTracksFunc)(CdAudioTracks *tracks);
 typedef void(__cdecl GetCdAudioPositionFunc)(CdAudioPosition *position);
 typedef int32_t(__cdecl SetCdAudioVolumeFunc)(int32_t volume);
 typedef void(__stdcall DeInitCdAudioFunc)(void);
+typedef void(__stdcall HandleMessagesFunc)(void);
 
 class PatchedSim {
 public:
@@ -110,6 +111,7 @@ public:
   static GetCdAudioPositionFunc *OriginalGetCdAudioPosition;
   static SetCdAudioVolumeFunc *OriginalSetCdAudioVolume;
   static DeInitCdAudioFunc *OriginalDeInitCdAudio;
+  static HandleMessagesFunc *OriginalHandleMessages;
 
   // Globals
   static volatile DWORD *pTicksCheck;
@@ -135,6 +137,7 @@ public:
   static volatile CdAudioTracks *pCdAudioTrackData;
   static volatile CdAudioPosition *pPausedCdAudioPosition;
   static volatile int32_t *pCdAudioVolume;
+  static volatile BOOL *pMessagesHandled;
 
   static GameTickTimerCallbackFunc GameTickTimerCallback;
   static IntegerOverflowHappensHereFunc IntegerOverflowHappensHere;
@@ -145,6 +148,7 @@ public:
   static PlayCdAudioFunc PlayCdAudio;
   static StartCdAudioFunc StartCdAudio;
   static GetCdStatusFunc GetCdStatus;
+  static HandleMessagesFunc HandleMessages;
 
 private:
   HMODULE Module;
