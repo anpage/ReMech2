@@ -77,7 +77,7 @@ typedef void(__cdecl SomeAspectRatioCalculationFunc)(SomeAspectRatioStruct *some
 typedef uint32_t(__stdcall InitCdAudioFunc)(void);
 typedef int32_t(__stdcall GetGameCdNumberFunc)(void);
 typedef int32_t(__stdcall GetCdAudioAuxDeviceFunc)(void);
-typedef uint32_t(__stdcall CloseCdAudioFunc)(void);
+typedef int32_t(__stdcall CloseCdAudioFunc)(void);
 typedef void(__cdecl PlayCdAudioFunc)(DWORD from, DWORD to);
 typedef int32_t(__stdcall StartCdAudioFunc)(void);
 typedef AudioCdStatus(__cdecl GetCdStatusFunc)(void);
@@ -148,6 +148,7 @@ public:
   static PlayCdAudioFunc PlayCdAudio;
   static StartCdAudioFunc StartCdAudio;
   static GetCdStatusFunc GetCdStatus;
+  static CloseCdAudioFunc CloseCdAudio;
   static HandleMessagesFunc HandleMessages;
 
 private:

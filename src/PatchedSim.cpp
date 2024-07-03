@@ -131,6 +131,7 @@ PatchedSim::PatchedSim() {
   DetourAttach((PVOID *)(&OriginalPlayCdAudio), PlayCdAudio);
   DetourAttach((PVOID *)(&OriginalGetCdStatus), GetCdStatus);
   DetourAttach((PVOID *)(&OriginalStartCdAudio), StartCdAudio);
+  DetourAttach((PVOID *)(&OriginalCloseCdAudio), CloseCdAudio);
   DetourAttach((PVOID *)(&OriginalHandleMessages), HandleMessages);
   DetourAttach((PVOID *)(&TrueRegCreateKeyExA), FakeRegCreateKeyExA);
   DetourAttach((PVOID *)(&TrueRegOpenKeyExA), FakeRegOpenKeyExA);
@@ -152,6 +153,7 @@ PatchedSim::~PatchedSim() {
   DetourDetach((PVOID *)(&OriginalPlayCdAudio), PlayCdAudio);
   DetourDetach((PVOID *)(&OriginalGetCdStatus), GetCdStatus);
   DetourDetach((PVOID *)(&OriginalStartCdAudio), StartCdAudio);
+  DetourAttach((PVOID *)(&OriginalCloseCdAudio), CloseCdAudio);
   DetourDetach((PVOID *)(&OriginalHandleMessages), HandleMessages);
   DetourDetach((PVOID *)(&TrueRegCreateKeyExA), FakeRegCreateKeyExA);
   DetourDetach((PVOID *)(&TrueRegOpenKeyExA), FakeRegOpenKeyExA);
@@ -245,8 +247,17 @@ void __cdecl PatchedSim::SomeAspectRatioCalculation(SomeAspectRatioStruct *someS
   (*pSomePointer)[0x11] = *pWidthScale;
 }
 
+// Cache the CD audio device to reuse between sim launches
+uint32_t CdAudioDevice = -1;
+
 // Fixed CD audio by not trying to use any specific drive, just the first one with CD audio
 uint32_t __stdcall PatchedSim::InitCdAudio() {
+  if (CdAudioDevice != -1) {
+    *pCdAudioDevice = CdAudioDevice;
+    *pCdAudioInitialized = 1;
+    return 0;
+  }
+
   MCI_OPEN_PARMSA mciOpenParms{};
   mciOpenParms.lpstrDeviceType = "cdaudio";
   MCIERROR mciOpenError = mciSendCommandA(0, MCI_OPEN, MCI_OPEN_TYPE, (DWORD_PTR)&mciOpenParms);
@@ -255,6 +266,7 @@ uint32_t __stdcall PatchedSim::InitCdAudio() {
   }
 
   *pCdAudioDevice = mciOpenParms.wDeviceID;
+  CdAudioDevice = *pCdAudioDevice;
 
   MCI_SET_PARMS mciSetParms{};
   mciSetParms.dwTimeFormat = MCI_FORMAT_TMSF;
@@ -338,6 +350,10 @@ AudioCdStatus __cdecl PatchedSim::GetCdStatus() {
 
   return CD_ERROR;
 }
+
+// Windows 11 was throwing an error if the CD device was closed.
+// Now we just cache the device and re-use it between sim launches.
+int32_t __stdcall PatchedSim::CloseCdAudio() { return 0; }
 
 // The commented-out loop was causing bad stuttering when the mouse was moved.
 // I'm keeping it around in case removing it causes other problems.
