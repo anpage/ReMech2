@@ -68,7 +68,8 @@ struct CdAudioPosition {
 
 typedef int(__stdcall *SimMainProc)(HMODULE module, unsigned int, LPSTR cmdLine, void **, BOOL isNetGame, HWND window);
 
-typedef void(__stdcall GameTickTimerCallbackFunc)(DWORD);
+typedef void(__stdcall GameTickTimerCallbackFunc)(void);
+typedef void(__stdcall SupAnimTimerCallbackFunc)(void);
 typedef int32_t(__cdecl IntegerOverflowHappensHereFunc)(int32_t, int32_t, int32_t);
 typedef void(__cdecl SimDebugLogFunc)(const char *format, ...);
 typedef void(__cdecl SetGameResolutionFunc)(char *driverName);
@@ -99,6 +100,7 @@ public:
 
   // Original functions to replace
   static GameTickTimerCallbackFunc *OriginalGameTickTimerCallback;
+  static SupAnimTimerCallbackFunc *OriginalSupAnimTimerCallback;
   static IntegerOverflowHappensHereFunc *OriginalIntegerOverflowHappensHere;
   static SimDebugLogFunc *OriginalSimDebugLog;
   static SetGameResolutionFunc *OriginalSetGameResolution;
@@ -147,7 +149,8 @@ public:
   static volatile int32_t *pCdAudioVolume;
   static volatile BOOL *pMessagesHandled;
 
-  static GameTickTimerCallbackFunc GameTickTimerCallback;
+  static AilCallback GameTickTimerCallback;
+  static AilCallback SupAnimTimerCallback;
   static IntegerOverflowHappensHereFunc IntegerOverflowHappensHere;
   static SetGameResolutionFunc SetGameResolution;
   static BlitFunc Blit;

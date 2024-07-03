@@ -2,6 +2,7 @@
 #include "Remech2.h"
 
 GameTickTimerCallbackFunc *PatchedSim::OriginalGameTickTimerCallback;
+SupAnimTimerCallbackFunc *PatchedSim::OriginalSupAnimTimerCallback;
 IntegerOverflowHappensHereFunc *PatchedSim::OriginalIntegerOverflowHappensHere;
 SimDebugLogFunc *PatchedSim::OriginalSimDebugLog;
 SetGameResolutionFunc *PatchedSim::OriginalSetGameResolution;
@@ -80,6 +81,7 @@ PatchedSim::PatchedSim() {
 
   // Original functions
   OriginalGameTickTimerCallback = (GameTickTimerCallbackFunc *)(baseAddress + 0x00067ed8);
+  OriginalSupAnimTimerCallback = (SupAnimTimerCallbackFunc *)(baseAddress + 0x00003f3d);
   OriginalIntegerOverflowHappensHere = (IntegerOverflowHappensHereFunc *)(baseAddress + 0x000035a0);
   OriginalSimDebugLog = (SimDebugLogFunc *)(baseAddress + 0x00050958);
   OriginalSetGameResolution = (SetGameResolutionFunc *)(baseAddress + 0x00067e23);
@@ -130,6 +132,7 @@ PatchedSim::PatchedSim() {
 
   DetourTransactionBegin();
   DetourAttach((PVOID *)(&OriginalGameTickTimerCallback), GameTickTimerCallback);
+  DetourAttach((PVOID *)(&OriginalSupAnimTimerCallback), SupAnimTimerCallback);
   DetourAttach((PVOID *)(&OriginalIntegerOverflowHappensHere), IntegerOverflowHappensHere);
   DetourAttach((PVOID *)(&OriginalSimDebugLog), DebugLog);
   DetourAttach((PVOID *)(&OriginalSetGameResolution), SetGameResolution);
@@ -154,6 +157,7 @@ PatchedSim::PatchedSim() {
 PatchedSim::~PatchedSim() {
   DetourTransactionBegin();
   DetourDetach((PVOID *)(&OriginalGameTickTimerCallback), GameTickTimerCallback);
+  DetourDetach((PVOID *)(&OriginalSupAnimTimerCallback), SupAnimTimerCallback);
   DetourDetach((PVOID *)(&OriginalIntegerOverflowHappensHere), IntegerOverflowHappensHere);
   DetourDetach((PVOID *)(&OriginalSimDebugLog), DebugLog);
   DetourDetach((PVOID *)(&OriginalSetGameResolution), SetGameResolution);
@@ -186,7 +190,7 @@ int PatchedSim::SimMain(LPSTR cmdLine, void **unknown, BOOL isNetGame, HWND wind
 
 // The original function was corrupting the stack with my custom PatchedAil::TimeProc.
 // Replacing it with this freshly recompiled copy fixed the problem (for now?)
-void __stdcall PatchedSim::GameTickTimerCallback(DWORD unused) {
+void __stdcall PatchedSim::GameTickTimerCallback(uint32_t unused) {
   if ((*pTicksCheck & 0x200) == 0) {
     (*pTicks1)++;
   }
@@ -194,6 +198,10 @@ void __stdcall PatchedSim::GameTickTimerCallback(DWORD unused) {
     (*pTicks2)++;
   }
 }
+
+// This was corrupting the stack too. It seems like AIL calls these with a DWORD parameter,
+// but Mech2 defines them without any.
+void __stdcall PatchedSim::SupAnimTimerCallback(uint32_t unused) { OriginalSupAnimTimerCallback(); }
 
 // This function is used all over the game to perform ((a * b) / c).
 // It sometimes overflows and sometimes divides by zero, especially when the FPS is too high.

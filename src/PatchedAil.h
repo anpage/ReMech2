@@ -7,19 +7,21 @@
 
 struct WaveHdrUser {
   char unknown1[20];
-  unsigned int unknown2;
-  int unknown3;
-  unsigned int unknown4;
+  uint32_t unknown2;
+  int32_t unknown3;
+  uint32_t unknown4;
   char unknown5[40];
-  int unknown6;
+  int32_t unknown6;
 };
 
+typedef void(__stdcall AilCallback)(uint32_t);
+
 struct SomeTimerStruct {
-  DWORD probablyState;
-  void(__stdcall *callback)(DWORD);
-  DWORD unknown;
-  int accumulatedTime;
-  int nextProcTime;
+  uint32_t probablyState;
+  AilCallback *callback;
+  uint32_t unknown;
+  int32_t accumulatedTime;
+  int32_t nextProcTime;
 };
 
 constexpr auto MAX_AIL_ALLOCATED_BLOCKS = 256;
