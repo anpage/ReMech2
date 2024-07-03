@@ -79,12 +79,16 @@ typedef int32_t(__stdcall GetGameCdNumberFunc)(void);
 typedef int32_t(__stdcall GetCdAudioAuxDeviceFunc)(void);
 typedef int32_t(__stdcall CloseCdAudioFunc)(void);
 typedef void(__cdecl PlayCdAudioFunc)(DWORD from, DWORD to);
+typedef void(__stdcall PauseCdAudioFunc)(void);
+typedef void(__stdcall ResumeCdAudioFunc)(void);
 typedef int32_t(__stdcall StartCdAudioFunc)(void);
 typedef AudioCdStatus(__cdecl GetCdStatusFunc)(void);
 typedef int32_t(__cdecl GetCdAudioTracksFunc)(CdAudioTracks *tracks);
 typedef void(__cdecl GetCdAudioPositionFunc)(CdAudioPosition *position);
 typedef int32_t(__cdecl SetCdAudioVolumeFunc)(int32_t volume);
 typedef void(__stdcall DeInitCdAudioFunc)(void);
+typedef void(__cdecl UpdateCdAudioPositionFunc)(CdAudioPosition *position);
+typedef void(__stdcall CdAudioTogglePausedFunc)(void);
 typedef void(__stdcall HandleMessagesFunc)(void);
 
 class PatchedSim {
@@ -105,12 +109,16 @@ public:
   static GetCdAudioAuxDeviceFunc *OriginalGetCdAudioAuxDevice;
   static CloseCdAudioFunc *OriginalCloseCdAudio;
   static PlayCdAudioFunc *OriginalPlayCdAudio;
+  static PauseCdAudioFunc *OriginalPauseCdAudio;
+  static ResumeCdAudioFunc *OriginalResumeCdAudio;
   static StartCdAudioFunc *OriginalStartCdAudio;
   static GetCdStatusFunc *OriginalGetCdStatus;
   static GetCdAudioTracksFunc *OriginalGetCdAudioTracks;
   static GetCdAudioPositionFunc *OriginalGetCdAudioPosition;
   static SetCdAudioVolumeFunc *OriginalSetCdAudioVolume;
   static DeInitCdAudioFunc *OriginalDeInitCdAudio;
+  static UpdateCdAudioPositionFunc *OriginalUpdateCdAudioPosition;
+  static CdAudioTogglePausedFunc *OriginalCdAudioTogglePaused;
   static HandleMessagesFunc *OriginalHandleMessages;
 
   // Globals
@@ -149,6 +157,8 @@ public:
   static StartCdAudioFunc StartCdAudio;
   static GetCdStatusFunc GetCdStatus;
   static CloseCdAudioFunc CloseCdAudio;
+  static UpdateCdAudioPositionFunc UpdateCdAudioPosition;
+  static CdAudioTogglePausedFunc CdAudioTogglePaused;
   static HandleMessagesFunc HandleMessages;
 
 private:

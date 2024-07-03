@@ -12,12 +12,16 @@ GetGameCdNumberFunc *PatchedSim::OriginalGetGameCdNumber;
 GetCdAudioAuxDeviceFunc *PatchedSim::OriginalGetCdAudioAuxDevice;
 CloseCdAudioFunc *PatchedSim::OriginalCloseCdAudio;
 PlayCdAudioFunc *PatchedSim::OriginalPlayCdAudio;
+PauseCdAudioFunc *PatchedSim::OriginalPauseCdAudio;
+ResumeCdAudioFunc *PatchedSim::OriginalResumeCdAudio;
 StartCdAudioFunc *PatchedSim::OriginalStartCdAudio;
 GetCdStatusFunc *PatchedSim::OriginalGetCdStatus;
 GetCdAudioTracksFunc *PatchedSim::OriginalGetCdAudioTracks;
 GetCdAudioPositionFunc *PatchedSim::OriginalGetCdAudioPosition;
 SetCdAudioVolumeFunc *PatchedSim::OriginalSetCdAudioVolume;
 DeInitCdAudioFunc *PatchedSim::OriginalDeInitCdAudio;
+UpdateCdAudioPositionFunc *PatchedSim::OriginalUpdateCdAudioPosition;
+CdAudioTogglePausedFunc *PatchedSim::OriginalCdAudioTogglePaused;
 HandleMessagesFunc *PatchedSim::OriginalHandleMessages;
 
 volatile DWORD *PatchedSim::pTicksCheck;
@@ -86,12 +90,16 @@ PatchedSim::PatchedSim() {
   OriginalGetCdAudioAuxDevice = (GetCdAudioAuxDeviceFunc *)(baseAddress + 0x0005a7a0);
   OriginalCloseCdAudio = (CloseCdAudioFunc *)(baseAddress + 0x0005aa0a);
   OriginalPlayCdAudio = (PlayCdAudioFunc *)(baseAddress + 0x0005aabe);
+  OriginalPauseCdAudio = (PauseCdAudioFunc *)(baseAddress + 0x0005aa40);
+  OriginalResumeCdAudio = (ResumeCdAudioFunc *)(baseAddress + 0x0005aa6a);
   OriginalStartCdAudio = (StartCdAudioFunc *)(baseAddress + 0x0005ab0b);
   OriginalGetCdStatus = (GetCdStatusFunc *)(baseAddress + 0x0005ac33);
   OriginalGetCdAudioTracks = (GetCdAudioTracksFunc *)(baseAddress + 0x0005b49e);
   OriginalGetCdAudioPosition = (GetCdAudioPositionFunc *)(baseAddress + 0x0005b61d);
   OriginalSetCdAudioVolume = (SetCdAudioVolumeFunc *)(baseAddress + 0x0005b734);
   OriginalDeInitCdAudio = (DeInitCdAudioFunc *)(baseAddress + 0x0005abff);
+    OriginalUpdateCdAudioPosition = (UpdateCdAudioPositionFunc *)(baseAddress + 0x0005af07);
+  OriginalCdAudioTogglePaused = (CdAudioTogglePausedFunc *)(baseAddress + 0x0005ad5e);
   OriginalHandleMessages = (HandleMessagesFunc *)(baseAddress + 0x00067bbc);
 
   // Globals
@@ -132,6 +140,8 @@ PatchedSim::PatchedSim() {
   DetourAttach((PVOID *)(&OriginalGetCdStatus), GetCdStatus);
   DetourAttach((PVOID *)(&OriginalStartCdAudio), StartCdAudio);
   DetourAttach((PVOID *)(&OriginalCloseCdAudio), CloseCdAudio);
+  DetourAttach((PVOID *)(&OriginalUpdateCdAudioPosition), UpdateCdAudioPosition);
+  DetourAttach((PVOID *)(&OriginalCdAudioTogglePaused), CdAudioTogglePaused);
   DetourAttach((PVOID *)(&OriginalHandleMessages), HandleMessages);
   DetourAttach((PVOID *)(&TrueRegCreateKeyExA), FakeRegCreateKeyExA);
   DetourAttach((PVOID *)(&TrueRegOpenKeyExA), FakeRegOpenKeyExA);
@@ -153,7 +163,9 @@ PatchedSim::~PatchedSim() {
   DetourDetach((PVOID *)(&OriginalPlayCdAudio), PlayCdAudio);
   DetourDetach((PVOID *)(&OriginalGetCdStatus), GetCdStatus);
   DetourDetach((PVOID *)(&OriginalStartCdAudio), StartCdAudio);
-  DetourAttach((PVOID *)(&OriginalCloseCdAudio), CloseCdAudio);
+  DetourDetach((PVOID *)(&OriginalCloseCdAudio), CloseCdAudio);
+  DetourDetach((PVOID *)(&OriginalUpdateCdAudioPosition), UpdateCdAudioPosition);
+  DetourDetach((PVOID *)(&OriginalCdAudioTogglePaused), CdAudioTogglePaused);
   DetourDetach((PVOID *)(&OriginalHandleMessages), HandleMessages);
   DetourDetach((PVOID *)(&TrueRegCreateKeyExA), FakeRegCreateKeyExA);
   DetourDetach((PVOID *)(&TrueRegOpenKeyExA), FakeRegOpenKeyExA);
@@ -290,7 +302,6 @@ void __cdecl PatchedSim::PlayCdAudio(DWORD from, DWORD to) {
     mciPlayParms.dwTo = to;
   }
   MCIERROR mciError = mciSendCommandA(*pCdAudioDevice, MCI_PLAY, dwFlags, (DWORD_PTR)&mciPlayParms);
-  MCI_MODE_NOT_READY;
 }
 
 int32_t PatchedSim::StartCdAudio() {
@@ -354,6 +365,55 @@ AudioCdStatus __cdecl PatchedSim::GetCdStatus() {
 // Windows 11 was throwing an error if the CD device was closed.
 // Now we just cache the device and re-use it between sim launches.
 int32_t __stdcall PatchedSim::CloseCdAudio() { return 0; }
+
+void __cdecl PatchedSim::UpdateCdAudioPosition(CdAudioPosition *position) {
+  if (*pCdAudioInitialized != 0) {
+    AudioCdStatus cdStatus = GetCdStatus();
+    switch (cdStatus) {
+    case OPEN:
+    case STOPPED:
+      position->track = 0;
+      position->minute = 0;
+      position->second = 0;
+      position->frame = 0;
+      break;
+    case PLAYING:
+      OriginalGetCdAudioPosition(position);
+      break;
+    case PAUSED:
+      position->track = pPausedCdAudioPosition->track;
+      position->minute = pPausedCdAudioPosition->minute;
+      position->second = pPausedCdAudioPosition->second;
+      position->frame = pPausedCdAudioPosition->frame;
+    }
+  }
+}
+
+// The game would reset to the first track of the CD when you unpause.
+// This starts playback again from the saved pause position instead;
+void __stdcall PatchedSim::CdAudioTogglePaused() {
+  if (*pCdAudioInitialized != 0) {
+    DWORD position;
+    AudioCdStatus cdStatus = GetCdStatus();
+    switch (cdStatus) {
+    case OPEN:
+      break;
+    case STOPPED:
+      position = pPausedCdAudioPosition->track;
+      position += (pPausedCdAudioPosition->minute & 0xFF) << 8;
+      position += (pPausedCdAudioPosition->second & 0xFF) << 16;
+      position += pPausedCdAudioPosition->frame << 24;
+      PlayCdAudio(position, 0);
+      break;
+    case PLAYING:
+      UpdateCdAudioPosition((CdAudioPosition *)pPausedCdAudioPosition);
+      OriginalPauseCdAudio();
+      break;
+    case PAUSED:
+      OriginalResumeCdAudio();
+    }
+  }
+}
 
 // The commented-out loop was causing bad stuttering when the mouse was moved.
 // I'm keeping it around in case removing it causes other problems.
