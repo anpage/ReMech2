@@ -41,3 +41,9 @@ jobs:
       # Add additional options to the MSBuild command line here (like platform or verbosity level).
       # See https://docs.microsoft.com/visualstudio/msbuild/msbuild-command-line-reference
       run: msbuild /m /p:Configuration=${{ matrix.configuration }} ${{env.SOLUTION_FILE_PATH}}
+
+    - name: Archive build output
+      uses: actions/upload-artifact@v2
+      with:
+        name: ReMech2-${{ matrix.configuration }}
+        path: ${{ github.workspace }}/${{ matrix.configuration }}/
