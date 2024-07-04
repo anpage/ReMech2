@@ -456,7 +456,7 @@ void __stdcall PatchedSim::HandleMessages() {
 }
 
 // Could be used to provide an option to turn off certain Betty notifications.
-// param_1 is 0 for the "heat levels critical" sound
+// `sound` is 0 for the "heat levels critical" sound
 void __cdecl PatchedSim::PlayCockpitSound(int32_t sound, int32_t unknown) { OriginalPlayCockpitSound(sound, unknown); }
 
 // Return a truly pseudorandom number instead of picking from the pregenerated table.
