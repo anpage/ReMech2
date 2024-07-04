@@ -91,6 +91,8 @@ typedef void(__stdcall DeInitCdAudioFunc)(void);
 typedef void(__cdecl UpdateCdAudioPositionFunc)(CdAudioPosition *position);
 typedef void(__stdcall CdAudioTogglePausedFunc)(void);
 typedef void(__stdcall HandleMessagesFunc)(void);
+typedef void(__cdecl PlayCockpitSoundFunc)(int32_t sound, int32_t unknown);
+typedef int32_t(__cdecl RandomIntBelowFunc)(int32_t max);
 
 class PatchedSim {
 public:
@@ -122,6 +124,8 @@ public:
   static UpdateCdAudioPositionFunc *OriginalUpdateCdAudioPosition;
   static CdAudioTogglePausedFunc *OriginalCdAudioTogglePaused;
   static HandleMessagesFunc *OriginalHandleMessages;
+  static PlayCockpitSoundFunc *OriginalPlayCockpitSound;
+  static RandomIntBelowFunc *OriginalRandomIntBelow;
 
   // Globals
   static volatile DWORD *pTicksCheck;
@@ -163,6 +167,8 @@ public:
   static UpdateCdAudioPositionFunc UpdateCdAudioPosition;
   static CdAudioTogglePausedFunc CdAudioTogglePaused;
   static HandleMessagesFunc HandleMessages;
+  static PlayCockpitSoundFunc PlayCockpitSound;
+  static RandomIntBelowFunc RandomIntBelow;
 
 private:
   HMODULE Module;

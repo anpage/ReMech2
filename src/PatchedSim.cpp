@@ -24,6 +24,8 @@ DeInitCdAudioFunc *PatchedSim::OriginalDeInitCdAudio;
 UpdateCdAudioPositionFunc *PatchedSim::OriginalUpdateCdAudioPosition;
 CdAudioTogglePausedFunc *PatchedSim::OriginalCdAudioTogglePaused;
 HandleMessagesFunc *PatchedSim::OriginalHandleMessages;
+PlayCockpitSoundFunc *PatchedSim::OriginalPlayCockpitSound;
+RandomIntBelowFunc *PatchedSim::OriginalRandomIntBelow;
 
 volatile DWORD *PatchedSim::pTicksCheck;
 volatile DWORD *PatchedSim::pTicks1;
@@ -100,9 +102,11 @@ PatchedSim::PatchedSim() {
   OriginalGetCdAudioPosition = (GetCdAudioPositionFunc *)(baseAddress + 0x0005b61d);
   OriginalSetCdAudioVolume = (SetCdAudioVolumeFunc *)(baseAddress + 0x0005b734);
   OriginalDeInitCdAudio = (DeInitCdAudioFunc *)(baseAddress + 0x0005abff);
-    OriginalUpdateCdAudioPosition = (UpdateCdAudioPositionFunc *)(baseAddress + 0x0005af07);
+  OriginalUpdateCdAudioPosition = (UpdateCdAudioPositionFunc *)(baseAddress + 0x0005af07);
   OriginalCdAudioTogglePaused = (CdAudioTogglePausedFunc *)(baseAddress + 0x0005ad5e);
   OriginalHandleMessages = (HandleMessagesFunc *)(baseAddress + 0x00067bbc);
+  OriginalPlayCockpitSound = (PlayCockpitSoundFunc *)(baseAddress + 0x00059f0f);
+  OriginalRandomIntBelow = (RandomIntBelowFunc *)(baseAddress + 0x000736b3);
 
   // Globals
   pTicksCheck = (DWORD *)(baseAddress + 0x000ad008);
@@ -146,6 +150,8 @@ PatchedSim::PatchedSim() {
   DetourAttach((PVOID *)(&OriginalUpdateCdAudioPosition), UpdateCdAudioPosition);
   DetourAttach((PVOID *)(&OriginalCdAudioTogglePaused), CdAudioTogglePaused);
   DetourAttach((PVOID *)(&OriginalHandleMessages), HandleMessages);
+  DetourAttach((PVOID *)(&OriginalPlayCockpitSound), PlayCockpitSound);
+  DetourAttach((PVOID *)(&OriginalRandomIntBelow), RandomIntBelow);
   DetourAttach((PVOID *)(&TrueRegCreateKeyExA), FakeRegCreateKeyExA);
   DetourAttach((PVOID *)(&TrueRegOpenKeyExA), FakeRegOpenKeyExA);
   DetourAttach((PVOID *)(&TrueTimeSetEvent), FakeTimeSetEvent);
@@ -171,6 +177,8 @@ PatchedSim::~PatchedSim() {
   DetourDetach((PVOID *)(&OriginalUpdateCdAudioPosition), UpdateCdAudioPosition);
   DetourDetach((PVOID *)(&OriginalCdAudioTogglePaused), CdAudioTogglePaused);
   DetourDetach((PVOID *)(&OriginalHandleMessages), HandleMessages);
+  DetourDetach((PVOID *)(&OriginalPlayCockpitSound), PlayCockpitSound);
+  DetourDetach((PVOID *)(&OriginalRandomIntBelow), RandomIntBelow);
   DetourDetach((PVOID *)(&TrueRegCreateKeyExA), FakeRegCreateKeyExA);
   DetourDetach((PVOID *)(&TrueRegOpenKeyExA), FakeRegOpenKeyExA);
   DetourDetach((PVOID *)(&TrueTimeSetEvent), FakeTimeSetEvent);
@@ -446,3 +454,13 @@ void __stdcall PatchedSim::HandleMessages() {
     }
   }
 }
+
+// Could be used to provide an option to turn off certain Betty notifications.
+// param_1 is 0 for the "heat levels critical" sound
+void __cdecl PatchedSim::PlayCockpitSound(int32_t sound, int32_t unknown) { OriginalPlayCockpitSound(sound, unknown); }
+
+// Return a truly pseudorandom number instead of picking from the pregenerated table.
+// This fixes the chance to explode if you're overheating because the pregenerated random
+// numbers had a chance to never return a number < 3 when modulo with a fixed DeltaTime.
+// TODO: This could break multiplayer. Look into another solution if it causes desync.
+int32_t __cdecl PatchedSim::RandomIntBelow(int32_t max) { return rand() % max; };
