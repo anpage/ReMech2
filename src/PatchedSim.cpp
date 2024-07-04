@@ -152,6 +152,7 @@ PatchedSim::PatchedSim() {
   DetourAttach((PVOID *)(&OriginalHandleMessages), HandleMessages);
   DetourAttach((PVOID *)(&OriginalPlayCockpitSound), PlayCockpitSound);
   DetourAttach((PVOID *)(&OriginalRandomIntBelow), RandomIntBelow);
+  DetourAttach((PVOID *)(&TrueHeapFree), FakeHeapFree);
   DetourAttach((PVOID *)(&TrueRegCreateKeyExA), FakeRegCreateKeyExA);
   DetourAttach((PVOID *)(&TrueRegOpenKeyExA), FakeRegOpenKeyExA);
   DetourAttach((PVOID *)(&TrueTimeSetEvent), FakeTimeSetEvent);
@@ -179,6 +180,7 @@ PatchedSim::~PatchedSim() {
   DetourDetach((PVOID *)(&OriginalHandleMessages), HandleMessages);
   DetourDetach((PVOID *)(&OriginalPlayCockpitSound), PlayCockpitSound);
   DetourDetach((PVOID *)(&OriginalRandomIntBelow), RandomIntBelow);
+  DetourDetach((PVOID *)(&TrueHeapFree), FakeHeapFree);
   DetourDetach((PVOID *)(&TrueRegCreateKeyExA), FakeRegCreateKeyExA);
   DetourDetach((PVOID *)(&TrueRegOpenKeyExA), FakeRegOpenKeyExA);
   DetourDetach((PVOID *)(&TrueTimeSetEvent), FakeTimeSetEvent);
