@@ -117,7 +117,6 @@
     <ClInclude Include="src\ReMech2.h" />
     <ClInclude Include="src\Resource.h" />
     <ClInclude Include="src\PatchedShell.h" />
-    <ClInclude Include="src\smack.h" />
     <ClInclude Include="src\soloud\include\dr_flac.h" />
     <ClInclude Include="src\soloud\include\dr_mp3.h" />
     <ClInclude Include="src\soloud\include\dr_wav.h" />

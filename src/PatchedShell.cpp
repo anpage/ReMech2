@@ -171,6 +171,11 @@ PatchedShell::~PatchedShell() {
 
   DetourDetach((PVOID *)(&OriginalMidiSequenceConstructor), MidiSequenceConstructor);
   DetourDetach((PVOID *)(&OriginalMidiSequenceDestructor), MidiSequenceDestructor);
+  DetourDetach((PVOID *)(&OriginalMidiSequenceStart), MidiSequenceStart);
+  DetourDetach((PVOID *)(&OriginalMidiSequenceStop), MidiSequenceStop);
+  DetourDetach((PVOID *)(&OriginalMidiSequenceApplyCurrentVolume), MidiSequenceApplyCurrentVolume);
+  DetourDetach((PVOID *)(&OriginalMidiSequenceSetLoopCount), MidiSequenceSetLoopCount);
+  DetourDetach((PVOID *)(&OriginalMidiSequenceGetGlobalActiveSequenceCount), MidiSequenceGetGlobalActiveSequenceCount);
 
   DetourDetach((PVOID *)(&TrueHeapFree), FakeHeapFree);
   DetourDetach((PVOID *)(&TrueRegCreateKeyExA), FakeRegCreateKeyExA);

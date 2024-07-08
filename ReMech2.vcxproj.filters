@@ -42,9 +42,6 @@
     <ClInclude Include="src\PatchedShell.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="src\smack.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="src\soloud\include\dr_flac.h">
       <Filter>Header Files\soloud</Filter>
     </ClInclude>

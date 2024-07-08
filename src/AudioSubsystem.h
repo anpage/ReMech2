@@ -1,20 +1,81 @@
 #pragma once
 #include "framework.h"
 #include "soloud.h"
+#include "soloud_wav.h"
+
+class MidiSequence;
 
 class AudioSubsystem {
 public:
   AudioSubsystem();
   ~AudioSubsystem();
-  void *GetDigitalDriver();
+  SoLoud::Soloud *GetDigitalDriver();
   void CloseDigitalDriver();
   void ApplyMidiVolume();
   uint32_t GetActiveSequenceCount();
+
+private:
+  bool digitalInitialized;
+  SoLoud::Soloud *soloud;
+  MidiSequence *currentMidiSequence;
 };
 
 typedef struct {
   AudioSubsystem *proxy;
 } AudioSubsystemProxy;
+
+class AudioSample {
+public:
+  AudioSample(AudioSubsystem *audioSubsystem, unsigned char *audioData, int32_t audioDataSize);
+  ~AudioSample();
+  void Start();
+  uint32_t GetIsPlaying();
+  void SetFade(int32_t rate, int32_t max, int32_t startVol, int32_t endVol);
+  void DoFade();
+  void EnableLoop();
+  void SetLoopCount(int32_t loopCount);
+  void SetVolume(int32_t volume);
+
+private:
+  AudioSubsystem *subsystem;
+  SoLoud::Wav *wave;
+  SoLoud::handle playHandle;
+  /// Volume in range 0-127
+  int32_t volume;
+
+  // Fade
+
+  int32_t initialFadeRate;
+  int32_t fadeRate;
+  int32_t maxFade;
+  int32_t startVolume;
+  int32_t endVolume;
+};
+
+typedef struct {
+  AudioSample *proxy;
+} AudioSampleProxy;
+
+class MidiSequence {
+public:
+  MidiSequence(AudioSubsystem *audioSubsystem, unsigned char *midiData, int32_t midiDataSize);
+  ~MidiSequence();
+  void Start();
+  void Stop();
+  void ApplyCurrentVolume();
+  void SetVolume(int32_t volume);
+  void SetLoopCount(int32_t loopCount);
+  uint32_t GetGlobalActiveSequenceCount();
+
+private:
+  AudioSubsystem *subsystem;
+  unsigned char *data;
+  int32_t dataSize;
+};
+
+typedef struct {
+  MidiSequence *proxy;
+} MidiSequenceProxy;
 
 typedef AudioSubsystemProxy *(__fastcall AudioSubsystemConstructorFunc)(AudioSubsystemProxy *_this);
 extern AudioSubsystemConstructorFunc AudioSubsystemConstructor;
@@ -34,26 +95,9 @@ extern ApplyMidiVolumeFunc AudioSubsystemApplyMidiVolume;
 typedef uint32_t(__fastcall GetActiveSequenceCountFunc)(AudioSubsystemProxy *_this);
 extern GetActiveSequenceCountFunc AudioSubsystemGetActiveSequenceCount;
 
-class AudioSample {
-public:
-  AudioSample();
-  ~AudioSample();
-  void Start();
-  uint32_t GetIsPlaying();
-  void SetFade(int32_t rate, int32_t max, int32_t startVol, int32_t endVol);
-  void DoFade();
-  void EnableLoop();
-  void SetLoopCount(int32_t loopCount);
-  void SetVolume(int32_t volume);
-};
-
-typedef struct {
-  AudioSample *proxy;
-} AudioSampleProxy;
-
 typedef AudioSampleProxy *(__fastcall AudioSampleConstructorFunc)(AudioSampleProxy *_this, void *unused,
-                                                                  AudioSubsystem *audioSubsystem, void *audioData,
-                                                                  int32_t audioDataSize);
+                                                                  AudioSubsystemProxy *audioSubsystemProxy,
+                                                                  void *audioData, int32_t audioDataSize);
 extern AudioSampleConstructorFunc AudioSampleConstructor;
 
 typedef void(__fastcall AudioSampleDestructorFunc)(AudioSampleProxy *_this);
@@ -81,25 +125,9 @@ extern SetLoopCountFunc AudioSampleSetLoopCount;
 typedef void(__fastcall SetVolumeFunc)(AudioSampleProxy *_this, void *unused, int32_t volume);
 extern SetVolumeFunc AudioSampleSetVolume;
 
-class MidiSequence {
-public:
-  MidiSequence(AudioSubsystem *audioSubsystem, void *audioData, int32_t audioDataSize);
-  ~MidiSequence();
-  void Start();
-  void Stop();
-  void ApplyCurrentVolume();
-  void SetVolume(int32_t volume);
-  void SetLoopCount(int32_t loopCount);
-  uint32_t GetGlobalActiveSequenceCount();
-};
-
-typedef struct {
-  MidiSequence *proxy;
-} MidiSequenceProxy;
-
 typedef MidiSequenceProxy *(__fastcall MidiSequenceConstructorFunc)(MidiSequenceProxy *_this, void *unused,
-                                                                    AudioSubsystem *audioSubsystem, void *audioData,
-                                                                    int32_t audioDataSize);
+                                                                    AudioSubsystemProxy *audioSubsystemProxy,
+                                                                    void *midiData, int32_t midiDataSize);
 extern MidiSequenceConstructorFunc MidiSequenceConstructor;
 
 typedef void(__fastcall MidiSequenceDestructorFunc)(MidiSequenceProxy *_this);
