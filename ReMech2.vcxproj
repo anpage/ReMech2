@@ -67,8 +67,9 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;WITH_MINIAUDIO;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(ProjectDir)src\soloud\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -80,8 +81,9 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;WITH_MINIAUDIO;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(ProjectDir)src\soloud\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -95,8 +97,9 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32;WITH_MINIAUDIO;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <AdditionalIncludeDirectories>$(ProjectDir)src\soloud\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -107,19 +110,86 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\AudioSubsystem.h" />
     <ClInclude Include="src\PatchedSim.h" />
     <ClInclude Include="src\PatchedAil.h" />
     <ClInclude Include="src\framework.h" />
     <ClInclude Include="src\ReMech2.h" />
     <ClInclude Include="src\Resource.h" />
     <ClInclude Include="src\PatchedShell.h" />
+    <ClInclude Include="src\smack.h" />
+    <ClInclude Include="src\soloud\include\dr_flac.h" />
+    <ClInclude Include="src\soloud\include\dr_mp3.h" />
+    <ClInclude Include="src\soloud\include\dr_wav.h" />
+    <ClInclude Include="src\soloud\include\miniaudio.h" />
+    <ClInclude Include="src\soloud\include\soloud.h" />
+    <ClInclude Include="src\soloud\include\soloud_audiosource.h" />
+    <ClInclude Include="src\soloud\include\soloud_bassboostfilter.h" />
+    <ClInclude Include="src\soloud\include\soloud_biquadresonantfilter.h" />
+    <ClInclude Include="src\soloud\include\soloud_bus.h" />
+    <ClInclude Include="src\soloud\include\soloud_c.h" />
+    <ClInclude Include="src\soloud\include\soloud_dcremovalfilter.h" />
+    <ClInclude Include="src\soloud\include\soloud_echofilter.h" />
+    <ClInclude Include="src\soloud\include\soloud_error.h" />
+    <ClInclude Include="src\soloud\include\soloud_fader.h" />
+    <ClInclude Include="src\soloud\include\soloud_fft.h" />
+    <ClInclude Include="src\soloud\include\soloud_fftfilter.h" />
+    <ClInclude Include="src\soloud\include\soloud_file.h" />
+    <ClInclude Include="src\soloud\include\soloud_file_hack_off.h" />
+    <ClInclude Include="src\soloud\include\soloud_file_hack_on.h" />
+    <ClInclude Include="src\soloud\include\soloud_filter.h" />
+    <ClInclude Include="src\soloud\include\soloud_flangerfilter.h" />
+    <ClInclude Include="src\soloud\include\soloud_freeverbfilter.h" />
+    <ClInclude Include="src\soloud\include\soloud_internal.h" />
+    <ClInclude Include="src\soloud\include\soloud_lofifilter.h" />
+    <ClInclude Include="src\soloud\include\soloud_misc.h" />
+    <ClInclude Include="src\soloud\include\soloud_monotone.h" />
+    <ClInclude Include="src\soloud\include\soloud_noise.h" />
+    <ClInclude Include="src\soloud\include\soloud_openmpt.h" />
+    <ClInclude Include="src\soloud\include\soloud_queue.h" />
+    <ClInclude Include="src\soloud\include\soloud_robotizefilter.h" />
+    <ClInclude Include="src\soloud\include\soloud_sfxr.h" />
+    <ClInclude Include="src\soloud\include\soloud_speech.h" />
+    <ClInclude Include="src\soloud\include\soloud_tedsid.h" />
+    <ClInclude Include="src\soloud\include\soloud_thread.h" />
+    <ClInclude Include="src\soloud\include\soloud_vic.h" />
+    <ClInclude Include="src\soloud\include\soloud_vizsn.h" />
+    <ClInclude Include="src\soloud\include\soloud_wav.h" />
+    <ClInclude Include="src\soloud\include\soloud_waveshaperfilter.h" />
+    <ClInclude Include="src\soloud\include\soloud_wavstream.h" />
+    <ClInclude Include="src\soloud\include\stb_vorbis.h" />
     <ClInclude Include="src\targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\AudioSubsystem.cpp" />
     <ClCompile Include="src\PatchedAil.cpp" />
     <ClCompile Include="src\PatchedSim.cpp" />
     <ClCompile Include="src\ReMech2.cpp" />
     <ClCompile Include="src\PatchedShell.cpp" />
+    <ClCompile Include="src\soloud\dr_impl.cpp" />
+    <ClCompile Include="src\soloud\soloud.cpp" />
+    <ClCompile Include="src\soloud\soloud_audiosource.cpp" />
+    <ClCompile Include="src\soloud\soloud_bus.cpp" />
+    <ClCompile Include="src\soloud\soloud_core_3d.cpp" />
+    <ClCompile Include="src\soloud\soloud_core_basicops.cpp" />
+    <ClCompile Include="src\soloud\soloud_core_faderops.cpp" />
+    <ClCompile Include="src\soloud\soloud_core_filterops.cpp" />
+    <ClCompile Include="src\soloud\soloud_core_getters.cpp" />
+    <ClCompile Include="src\soloud\soloud_core_setters.cpp" />
+    <ClCompile Include="src\soloud\soloud_core_voicegroup.cpp" />
+    <ClCompile Include="src\soloud\soloud_core_voiceops.cpp" />
+    <ClCompile Include="src\soloud\soloud_fader.cpp" />
+    <ClCompile Include="src\soloud\soloud_fft.cpp" />
+    <ClCompile Include="src\soloud\soloud_fft_lut.cpp" />
+    <ClCompile Include="src\soloud\soloud_file.cpp" />
+    <ClCompile Include="src\soloud\soloud_filter.cpp" />
+    <ClCompile Include="src\soloud\soloud_miniaudio.cpp" />
+    <ClCompile Include="src\soloud\soloud_misc.cpp" />
+    <ClCompile Include="src\soloud\soloud_queue.cpp" />
+    <ClCompile Include="src\soloud\soloud_thread.cpp" />
+    <ClCompile Include="src\soloud\soloud_wav.cpp" />
+    <ClCompile Include="src\soloud\soloud_wavstream.cpp" />
+    <ClCompile Include="src\soloud\stb_vorbis.c" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="ReMech2.rc" />

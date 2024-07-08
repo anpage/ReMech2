@@ -5,6 +5,32 @@ LoadMechVariantListFunc *PatchedShell::OriginalLoadMechVariantList;
 CallsBitBlitFunc *PatchedShell::OriginalCallsBitBlit;
 ShellDebugLogFunc *PatchedShell::OriginalShellDebugLog;
 
+AudioSubsystemConstructorFunc *PatchedShell::OriginalAudioSubsystemConstructor;
+AudioSubsystemDestructorFunc *PatchedShell::OriginalAudioSubsystemDestructor;
+GetDigitalDriverFunc *PatchedShell::OriginalGetDigitalDriver;
+CloseDigitalDriverFunc *PatchedShell::OriginalCloseDigitalDriver;
+ApplyMidiVolumeFunc *PatchedShell::OriginalApplyMidiVolume;
+GetActiveSequenceCountFunc *PatchedShell::OriginalGetActiveSequenceCount;
+
+AudioSampleConstructorFunc *PatchedShell::OriginalAudioSampleConstructor;
+AudioSampleDestructorFunc *PatchedShell::OriginalAudioSampleDestructor;
+StartFunc *PatchedShell::OriginalStart;
+GetIsPlayingFunc *PatchedShell::OriginalGetIsPlaying;
+SetFadeFunc *PatchedShell::OriginalSetFade;
+DoFadeFunc *PatchedShell::OriginalDoFade;
+EnableLoopFunc *PatchedShell::OriginalEnableLoop;
+SetLoopCountFunc *PatchedShell::OriginalSetLoopCount;
+SetVolumeFunc *PatchedShell::OriginalSetVolume;
+
+MidiSequenceConstructorFunc *PatchedShell::OriginalMidiSequenceConstructor;
+MidiSequenceDestructorFunc *PatchedShell::OriginalMidiSequenceDestructor;
+MidiSequenceStartFunc *PatchedShell::OriginalMidiSequenceStart;
+MidiSequenceStopFunc *PatchedShell::OriginalMidiSequenceStop;
+MidiSequenceApplyCurrentVolumeFunc *PatchedShell::OriginalMidiSequenceApplyCurrentVolume;
+MidiSequenceSetVolumeFunc *PatchedShell::OriginalMidiSequenceSetVolume;
+MidiSequenceSetLoopCountFunc *PatchedShell::OriginalMidiSequenceSetLoopCount;
+MidiSequenceGetGlobalActiveSequenceCountFunc *PatchedShell::OriginalMidiSequenceGetGlobalActiveSequenceCount;
+
 // Globals
 volatile char *PatchedShell::MechVariantFilename;
 volatile char (*PatchedShell::pMechVariantFilenames)[200][13];
@@ -43,7 +69,33 @@ PatchedShell::PatchedShell() {
 
   OriginalLoadMechVariantList = (LoadMechVariantListFunc *)(baseAddress + 0x0000c8b8);
   OriginalCallsBitBlit = (CallsBitBlitFunc *)(baseAddress + 0x00030ef9);
-  OriginalShellDebugLog = (ShellDebugLogFunc *)(0x00017982 + baseAddress);
+  OriginalShellDebugLog = (ShellDebugLogFunc *)(baseAddress + 0x00017982);
+
+  OriginalAudioSubsystemConstructor = (AudioSubsystemConstructorFunc *)(baseAddress + 0x0003ceb0);
+  OriginalAudioSubsystemDestructor = (AudioSubsystemDestructorFunc *)(baseAddress + 0x0003cf5d);
+  OriginalGetDigitalDriver = (GetDigitalDriverFunc *)(baseAddress + 0x0003cf89);
+  OriginalCloseDigitalDriver = (CloseDigitalDriverFunc *)(baseAddress + 0x0003d032);
+  OriginalApplyMidiVolume = (ApplyMidiVolumeFunc *)(baseAddress + 0x0003d0fc);
+  OriginalGetActiveSequenceCount = (GetActiveSequenceCountFunc *)(baseAddress + 0x0003d0b4);
+
+  OriginalAudioSampleConstructor = (AudioSampleConstructorFunc *)(baseAddress + 0x0003d419);
+  OriginalAudioSampleDestructor = (AudioSampleDestructorFunc *)(baseAddress + 0x0003d50f);
+  OriginalStart = (StartFunc *)(baseAddress + 0x0003d6bb);
+  OriginalGetIsPlaying = (GetIsPlayingFunc *)(baseAddress + 0x0003d77e);
+  OriginalSetFade = (SetFadeFunc *)(baseAddress + 0x0003d561);
+  OriginalDoFade = (DoFadeFunc *)(baseAddress + 0x0003d5ca);
+  OriginalEnableLoop = (EnableLoopFunc *)(baseAddress + 0x0003d67f);
+  OriginalSetLoopCount = (SetLoopCountFunc *)(baseAddress + 0x0003d842);
+  OriginalSetVolume = (SetVolumeFunc *)(baseAddress + 0x0003d7c0);
+
+  OriginalMidiSequenceConstructor = (MidiSequenceConstructorFunc *)(baseAddress + 0x0003d198);
+  OriginalMidiSequenceDestructor = (MidiSequenceDestructorFunc *)(baseAddress + 0x0003d29e);
+  OriginalMidiSequenceStart = (MidiSequenceStartFunc *)(baseAddress + 0x0003d2f7);
+  OriginalMidiSequenceStop = (MidiSequenceStopFunc *)(baseAddress + 0x0003d341);
+  OriginalMidiSequenceApplyCurrentVolume = (MidiSequenceApplyCurrentVolumeFunc *)(baseAddress + 0x0003d3f4);
+  OriginalMidiSequenceSetLoopCount = (MidiSequenceSetLoopCountFunc *)(baseAddress + 0x0003d25c);
+  OriginalMidiSequenceGetGlobalActiveSequenceCount =
+      (MidiSequenceGetGlobalActiveSequenceCountFunc *)(baseAddress + 0x0003d3d4);
 
   MechVariantFilename = (char *)(baseAddress + 0x0007a800);
   pMechVariantFilenames = (char(*)[200][13])(baseAddress + 0x00079d80);
@@ -61,6 +113,32 @@ PatchedShell::PatchedShell() {
   DetourAttach((PVOID *)(&OriginalLoadMechVariantList), LoadMechVariantList);
   DetourAttach((PVOID *)(&OriginalCallsBitBlit), CallsBitBlit);
   DetourAttach((PVOID *)(&OriginalShellDebugLog), DebugLog);
+
+  DetourAttach((PVOID *)(&OriginalAudioSubsystemConstructor), AudioSubsystemConstructor);
+  DetourAttach((PVOID *)(&OriginalAudioSubsystemDestructor), AudioSubsystemDestructor);
+  DetourAttach((PVOID *)(&OriginalGetDigitalDriver), AudioSubsystemGetDigitalDriver);
+  DetourAttach((PVOID *)(&OriginalCloseDigitalDriver), AudioSubsystemCloseDigitalDriver);
+  DetourAttach((PVOID *)(&OriginalApplyMidiVolume), AudioSubsystemApplyMidiVolume);
+  DetourAttach((PVOID *)(&OriginalGetActiveSequenceCount), AudioSubsystemGetActiveSequenceCount);
+
+  DetourAttach((PVOID *)(&OriginalAudioSampleConstructor), AudioSampleConstructor);
+  DetourAttach((PVOID *)(&OriginalAudioSampleDestructor), AudioSampleDestructor);
+  DetourAttach((PVOID *)(&OriginalStart), AudioSampleStart);
+  DetourAttach((PVOID *)(&OriginalGetIsPlaying), AudioSampleGetIsPlaying);
+  DetourAttach((PVOID *)(&OriginalSetFade), AudioSampleSetFade);
+  DetourAttach((PVOID *)(&OriginalDoFade), AudioSampleDoFade);
+  DetourAttach((PVOID *)(&OriginalEnableLoop), AudioSampleEnableLoop);
+  DetourAttach((PVOID *)(&OriginalSetLoopCount), AudioSampleSetLoopCount);
+  DetourAttach((PVOID *)(&OriginalSetVolume), AudioSampleSetVolume);
+
+  DetourAttach((PVOID *)(&OriginalMidiSequenceConstructor), MidiSequenceConstructor);
+  DetourAttach((PVOID *)(&OriginalMidiSequenceDestructor), MidiSequenceDestructor);
+  DetourAttach((PVOID *)(&OriginalMidiSequenceStart), MidiSequenceStart);
+  DetourAttach((PVOID *)(&OriginalMidiSequenceStop), MidiSequenceStop);
+  DetourAttach((PVOID *)(&OriginalMidiSequenceApplyCurrentVolume), MidiSequenceApplyCurrentVolume);
+  DetourAttach((PVOID *)(&OriginalMidiSequenceSetLoopCount), MidiSequenceSetLoopCount);
+  DetourAttach((PVOID *)(&OriginalMidiSequenceGetGlobalActiveSequenceCount), MidiSequenceGetGlobalActiveSequenceCount);
+
   DetourAttach((PVOID *)(&TrueHeapFree), FakeHeapFree);
   DetourAttach((PVOID *)(&TrueRegCreateKeyExA), FakeRegCreateKeyExA);
   DetourAttach((PVOID *)(&TrueRegOpenKeyExA), FakeRegOpenKeyExA);
@@ -74,6 +152,26 @@ PatchedShell::~PatchedShell() {
   DetourDetach((PVOID *)(&OriginalLoadMechVariantList), LoadMechVariantList);
   DetourDetach((PVOID *)(&OriginalCallsBitBlit), CallsBitBlit);
   DetourDetach((PVOID *)(&OriginalShellDebugLog), DebugLog);
+
+  DetourDetach((PVOID *)(&OriginalAudioSubsystemConstructor), AudioSubsystemConstructor);
+  DetourDetach((PVOID *)(&OriginalAudioSubsystemDestructor), AudioSubsystemDestructor);
+  DetourDetach((PVOID *)(&OriginalGetDigitalDriver), AudioSubsystemGetDigitalDriver);
+  DetourDetach((PVOID *)(&OriginalCloseDigitalDriver), AudioSubsystemCloseDigitalDriver);
+  DetourDetach((PVOID *)(&OriginalApplyMidiVolume), AudioSubsystemApplyMidiVolume);
+
+  DetourDetach((PVOID *)(&OriginalAudioSampleConstructor), AudioSampleConstructor);
+  DetourDetach((PVOID *)(&OriginalAudioSampleDestructor), AudioSampleDestructor);
+  DetourDetach((PVOID *)(&OriginalStart), AudioSampleStart);
+  DetourDetach((PVOID *)(&OriginalGetIsPlaying), AudioSampleGetIsPlaying);
+  DetourDetach((PVOID *)(&OriginalSetFade), AudioSampleSetFade);
+  DetourDetach((PVOID *)(&OriginalDoFade), AudioSampleDoFade);
+  DetourDetach((PVOID *)(&OriginalEnableLoop), AudioSampleEnableLoop);
+  DetourDetach((PVOID *)(&OriginalSetLoopCount), AudioSampleSetLoopCount);
+  DetourDetach((PVOID *)(&OriginalSetVolume), AudioSampleSetVolume);
+
+  DetourDetach((PVOID *)(&OriginalMidiSequenceConstructor), MidiSequenceConstructor);
+  DetourDetach((PVOID *)(&OriginalMidiSequenceDestructor), MidiSequenceDestructor);
+
   DetourDetach((PVOID *)(&TrueHeapFree), FakeHeapFree);
   DetourDetach((PVOID *)(&TrueRegCreateKeyExA), FakeRegCreateKeyExA);
   DetourDetach((PVOID *)(&TrueRegOpenKeyExA), FakeRegOpenKeyExA);

@@ -4,6 +4,7 @@
 
 #include "framework.h"
 #include "PatchedAil.h"
+#include "AudioSubsystem.h"
 
 typedef int(__stdcall *ShellMainProc)(HMODULE module, int, const char *, int, HWND);
 
@@ -27,6 +28,32 @@ private:
   static LoadMechVariantListFunc *OriginalLoadMechVariantList;
   static CallsBitBlitFunc *OriginalCallsBitBlit;
   static ShellDebugLogFunc *OriginalShellDebugLog;
+
+  static AudioSubsystemConstructorFunc *OriginalAudioSubsystemConstructor;
+  static AudioSubsystemDestructorFunc *OriginalAudioSubsystemDestructor;
+  static GetDigitalDriverFunc *OriginalGetDigitalDriver;
+  static CloseDigitalDriverFunc *OriginalCloseDigitalDriver;
+  static ApplyMidiVolumeFunc *OriginalApplyMidiVolume;
+  static GetActiveSequenceCountFunc *OriginalGetActiveSequenceCount;
+
+  static AudioSampleConstructorFunc *OriginalAudioSampleConstructor;
+  static AudioSampleDestructorFunc *OriginalAudioSampleDestructor;
+  static StartFunc *OriginalStart;
+  static GetIsPlayingFunc *OriginalGetIsPlaying;
+  static SetFadeFunc *OriginalSetFade;
+  static DoFadeFunc *OriginalDoFade;
+  static EnableLoopFunc *OriginalEnableLoop;
+  static SetLoopCountFunc *OriginalSetLoopCount;
+  static SetVolumeFunc *OriginalSetVolume;
+
+  static MidiSequenceConstructorFunc *OriginalMidiSequenceConstructor;
+  static MidiSequenceDestructorFunc *OriginalMidiSequenceDestructor;
+  static MidiSequenceStartFunc *OriginalMidiSequenceStart;
+  static MidiSequenceStopFunc *OriginalMidiSequenceStop;
+  static MidiSequenceApplyCurrentVolumeFunc *OriginalMidiSequenceApplyCurrentVolume;
+  static MidiSequenceSetVolumeFunc *OriginalMidiSequenceSetVolume;
+  static MidiSequenceSetLoopCountFunc *OriginalMidiSequenceSetLoopCount;
+  static MidiSequenceGetGlobalActiveSequenceCountFunc *OriginalMidiSequenceGetGlobalActiveSequenceCount;
 
   // Globals
   static volatile char *MechVariantFilename;

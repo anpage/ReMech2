@@ -19,4 +19,4 @@
 #include <tchar.h>
 #include <stdint.h>
 // Dependencies
-#include <detours/detours.h>
+#include "detours/detours.h"
