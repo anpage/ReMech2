@@ -1,3 +1,8 @@
+# Deprecated
+
+> [!CAUTION]
+> This project is my outdated first attempt at patching MechWarrior 2 and it was quickly replaced with a new Rust-based project, [which you can find here](https://github.com/anpage/remech2-rs).
+
 # ReMech 2
 
 ReMech 2 is an unofficial open-source replacement executable for the Windows 95
